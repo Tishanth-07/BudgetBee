@@ -23,22 +23,40 @@ export default function Register() {
 
     return (
         <View className="flex-1 justify-center p-6 bg-white">
-            <Text className="text-3xl font-bold mb-6 text-center text-yellow-500">Join Budget Bee</Text>
+            <Text className="text-3xl font-bold mb-6 text-center text-blue-500">Join Budget Bee</Text>
 
             {error ? <Text className="text-red-500 mb-4 text-center">{error}</Text> : null}
 
-            <Controller
-                control={control}
-                name="name"
-                render={({ field: { onChange, value } }) => (
-                    <TextInput
-                        className="border border-gray-300 rounded-lg p-3 mb-4"
-                        placeholder="Full Name"
-                        value={value}
-                        onChangeText={onChange}
+            <View className="flex-row justify-between mb-4">
+                <View className="flex-1 mr-2">
+                    <Controller
+                        control={control}
+                        name="firstName"
+                        render={({ field: { onChange, value } }) => (
+                            <TextInput
+                                className="border border-gray-300 rounded-lg p-3"
+                                placeholder="First Name"
+                                value={value}
+                                onChangeText={onChange}
+                            />
+                        )}
                     />
-                )}
-            />
+                </View>
+                <View className="flex-1 ml-2">
+                    <Controller
+                        control={control}
+                        name="lastName"
+                        render={({ field: { onChange, value } }) => (
+                            <TextInput
+                                className="border border-gray-300 rounded-lg p-3"
+                                placeholder="Last Name"
+                                value={value}
+                                onChangeText={onChange}
+                            />
+                        )}
+                    />
+                </View>
+            </View>
 
             <Controller
                 control={control}
@@ -69,7 +87,7 @@ export default function Register() {
             />
 
             <TouchableOpacity
-                className="bg-yellow-500 p-4 rounded-lg items-center"
+                className="bg-blue-500 p-4 rounded-lg items-center"
                 onPress={handleSubmit(onSubmit)}
             >
                 <Text className="font-bold text-white">Register</Text>
