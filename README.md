@@ -71,7 +71,7 @@ Budget Bee follows a clean **4-tier architecture** designed for scalability and 
 
 <br />
 
-![Budget Bee System Architecture](./budget-bee-frontend/assets/images/architecture-diagram.svg)
+![Budget Bee System Architecture](./budget-bee-frontend/assets/architecture-diagram.svg)
 
 <br />
 
