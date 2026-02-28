@@ -22,7 +22,11 @@ function InitialLayout() {
         if (isAuthenticated && inAuthGroup) {
             router.replace('/(app)');
         } else if (!isAuthenticated && !inAuthGroup) {
+<<<<<<< HEAD
             router.replace('/(auth)/welcome');
+=======
+            router.replace('/(auth)/login');
+>>>>>>> feature/backend/categories-api
         }
     }, [isAuthenticated, segments]);
 

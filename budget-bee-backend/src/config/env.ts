@@ -6,7 +6,11 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 const envSchema = z.object({
     NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+<<<<<<< HEAD
     PORT: z.coerce.number().default(3000),
+=======
+    PORT: z.string().transform((val) => parseInt(val, 10)).default('3000'),
+>>>>>>> feature/backend/categories-api
     DATABASE_URL: z.string(),
     JWT_SECRET: z.string().default('supersecret'),
 });

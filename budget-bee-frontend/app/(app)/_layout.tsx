@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { Tabs, useRouter } from 'expo-router';
 import { View } from 'react-native';
 import { LayoutGrid, PiggyBank, Plus, GraduationCap, MoreHorizontal } from 'lucide-react-native';
@@ -65,12 +66,35 @@ export default function AppLayout() {
                 options={{
                     title: 'More',
                     tabBarIcon: ({ color, size }) => <MoreHorizontal color={color} size={size} />,
+=======
+import { Tabs } from 'expo-router';
+import { View, Text } from 'react-native';
+
+function TabIcon({ name, color }: { name: string; color: string }) {
+    // Placeholder for Icon implementation (e.g. Ionicons)
+    return <Text style={{ color }}>{name}</Text>;
+}
+
+export default function AppLayout() {
+    return (
+        <Tabs screenOptions={{ tabBarActiveTintColor: '#EAB308' }}>
+            <Tabs.Screen
+                name="index"
+                options={{
+                    title: 'Home',
+                    tabBarIcon: ({ color }) => <TabIcon name="Home" color={color} />
+>>>>>>> feature/backend/categories-api
                 }}
             />
             <Tabs.Screen
                 name="transactions"
                 options={{
+<<<<<<< HEAD
                     href: null,
+=======
+                    title: 'Transactions',
+                    tabBarIcon: ({ color }) => <TabIcon name="List" color={color} />
+>>>>>>> feature/backend/categories-api
                 }}
             />
         </Tabs>
