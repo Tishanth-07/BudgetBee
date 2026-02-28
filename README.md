@@ -285,7 +285,7 @@ Please keep PRs focused and well-described.
 **Sivakumar** — Colombo, Sri Lanka
 
 - 📧 Email: [tishanthsivakumar007@gmail.com](mailto:tishanthsivakumar007@gmail.com)
-- 💼 LinkedIn: [https://www.linkedin.com/in/tishanth-t007/]([https://linkedin.com/in/yourprofile](https://www.linkedin.com/in/tishanth-t007/))
+- 💼 LinkedIn: [https://www.linkedin.com/in/tishanth-t007/](https://www.linkedin.com/in/tishanth-t007/)
 
 ---
 
