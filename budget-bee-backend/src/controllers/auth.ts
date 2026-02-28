@@ -8,8 +8,7 @@ import { z } from 'zod';
 const registerSchema = z.object({
     email: z.string().email(),
     password: z.string().min(6),
-    firstName: z.string().min(2),
-    lastName: z.string().min(2),
+    name: z.string().min(2),
 });
 
 const loginSchema = z.object({
@@ -19,7 +18,7 @@ const loginSchema = z.object({
 
 export const register = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { email, password, firstName, lastName } = registerSchema.parse(req.body);
+        const { email, password, name } = registerSchema.parse(req.body);
 
         const existingUser = await prisma.user.findUnique({ where: { email } });
         if (existingUser) {
@@ -29,12 +28,12 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
 
         const passwordHash = await bcrypt.hash(password, 10);
         const user = await prisma.user.create({
-            data: { email, passwordHash, firstName, lastName },
+            data: { email, passwordHash, name },
         });
 
         const token = jwt.sign({ userId: user.id }, config.JWT_SECRET, { expiresIn: '7d' });
 
-        res.status(201).json({ token, user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName } });
+        res.status(201).json({ token, user: { id: user.id, email: user.email, name: user.name } });
     } catch (error) {
         next(error);
     }
@@ -58,7 +57,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
 
         const token = jwt.sign({ userId: user.id }, config.JWT_SECRET, { expiresIn: '7d' });
 
-        res.json({ token, user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName } });
+        res.json({ token, user: { id: user.id, email: user.email, name: user.name } });
     } catch (error) {
         next(error);
     }
