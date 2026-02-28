@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Modal, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
@@ -212,6 +213,17 @@ export default function AddTransaction() {
                     </View>
                 </View>
             </Modal>
+=======
+
+import { View, Text } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+export default function Add() {
+    return (
+        <SafeAreaView className="flex-1 bg-blue-50 items-center justify-center">
+            <Text className="text-2xl font-bold text-blue-900">Add Transaction</Text>
+            <Text className="text-blue-500 mt-2">Form to add income/expense</Text>
+>>>>>>> feature/frontend/tab-navigation-shell
         </SafeAreaView>
     );
 }
