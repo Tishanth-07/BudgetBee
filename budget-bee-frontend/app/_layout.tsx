@@ -1,14 +1,17 @@
-import { Slot, useRouter, useSegments, useRootNavigationState } from 'expo-router';
+import { Slot, useRouter, useSegments, useRootNavigationState, SplashScreen } from 'expo-router';
 import { useEffect } from 'react';
 import { View } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuthStore } from '../store/authStore';
 import '../global.css';
 
+// Keep the splash screen visible while we fetch resources
+SplashScreen.preventAutoHideAsync();
+
 const queryClient = new QueryClient();
 
 function InitialLayout() {
-    const { isAuthenticated, loadToken } = useAuthStore();
+    const { isAuthenticated, isReady, loadToken } = useAuthStore();
     const segments = useSegments();
     const router = useRouter();
     const navigationState = useRootNavigationState();
@@ -18,7 +21,7 @@ function InitialLayout() {
     }, []);
 
     useEffect(() => {
-        if (!navigationState?.key) return; // Wait for navigation to be ready
+        if (!navigationState?.key || !isReady) return; // Wait for navigation and auth to be ready
 
         const inAuthGroup = segments[0] === '(auth)';
 
@@ -27,7 +30,10 @@ function InitialLayout() {
         } else if (!isAuthenticated && !inAuthGroup) {
             router.replace('/(auth)/welcome');
         }
-    }, [isAuthenticated, segments, navigationState?.key]);
+
+        // Hide splash screen since routing decision is made
+        SplashScreen.hideAsync();
+    }, [isAuthenticated, isReady, segments, navigationState?.key]);
 
     return <Slot />;
 }
