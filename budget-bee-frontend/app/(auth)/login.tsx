@@ -23,7 +23,11 @@ export default function Login() {
 
     return (
         <View className="flex-1 justify-center p-6 bg-white">
+<<<<<<< HEAD
             <Text className="text-3xl font-bold mb-6 text-center text-blue-500">Budget Bee</Text>
+=======
+            <Text className="text-3xl font-bold mb-6 text-center text-yellow-500">Budget Bee</Text>
+>>>>>>> feature/backend/categories-api
 
             {error ? <Text className="text-red-500 mb-4 text-center">{error}</Text> : null}
 
@@ -56,7 +60,11 @@ export default function Login() {
             />
 
             <TouchableOpacity
+<<<<<<< HEAD
                 className="bg-blue-500 p-4 rounded-lg items-center"
+=======
+                className="bg-yellow-500 p-4 rounded-lg items-center"
+>>>>>>> feature/backend/categories-api
                 onPress={handleSubmit(onSubmit)}
             >
                 <Text className="font-bold text-white">Login</Text>
