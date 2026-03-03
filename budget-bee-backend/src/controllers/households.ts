@@ -39,7 +39,6 @@ export const getHouseholds = async (req: AuthRequest, res: Response, next: NextF
                                 id: true,
                                 firstName: true,
                                 lastName: true,
-                                avatar: true,
                             },
                         },
                     },
@@ -110,7 +109,7 @@ export const getHouseholdById = async (req: AuthRequest, res: Response, next: Ne
                                 id: true,
                                 firstName: true,
                                 lastName: true,
-                                avatar: true,
+
                             },
                         },
                     },

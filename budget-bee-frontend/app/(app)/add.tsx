@@ -1,229 +1,249 @@
-<<<<<<< HEAD
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Modal, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Modal, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '../../lib/api/client';
+import { apiRequest } from '../../lib/api/client';
 import { useState } from 'react';
-import { X } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 import clsx from 'clsx';
 import { useRouter } from 'expo-router';
+
+const ICON_MAP: Record<string, string> = {
+    fork: "restaurant-outline",
+    car: "car-outline",
+    house: "home-outline",
+    stethoscope: "medkit-outline",
+    "gift-box": "gift-outline",
+    diamond: "diamond-outline",
+    heart: "heart-outline",
+    pants: "bag-outline",
+    paw: "paw-outline",
+    dots: "pricetag-outline",
+};
 
 export default function AddTransaction() {
     const router = useRouter();
     const queryClient = useQueryClient();
-    const [transactionType, setTransactionType] = useState<'expense' | 'income'>('expense');
-    const [showCategoryModal, setShowCategoryModal] = useState(false);
+    const [transactionType, setTransactionType] = useState<'EXPENSE' | 'INCOME'>('EXPENSE');
 
     const { control, handleSubmit, reset } = useForm({
         defaultValues: {
             amount: '',
             note: '',
             categoryId: '',
-            date: new Date().toISOString(),
+            accountId: '',
+            merchant: '',
         }
+    });
+
+    const { data: accounts } = useQuery({
+        queryKey: ['accounts'],
+        queryFn: async () => {
+            return await apiRequest<any[]>('get', '/accounts');
+        },
+        initialData: []
     });
 
     const { data: categories } = useQuery({
         queryKey: ['categories'],
         queryFn: async () => {
-            const res = await api.get('/categories');
-            return res.data;
-        }
+            return await apiRequest<any[]>('get', '/categories');
+        },
+        initialData: []
     });
 
     const createTransaction = useMutation({
         mutationFn: async (data: any) => {
-            return api.post('/transactions', {
+            return await apiRequest('post', '/transactions', {
                 ...data,
                 amount: parseFloat(data.amount),
                 type: transactionType,
-                date: new Date(),
+                date: new Date().toISOString(),
             });
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['transactions'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+            queryClient.invalidateQueries({ queryKey: ['accounts'] });
             reset();
-            router.replace('/(app)'); // Go back to dashboard
+            router.replace('/(app)');
         },
-        onError: (err) => {
-            Alert.alert('Error', 'Failed to create transaction');
-        }
-    });
-
-    const createCategory = useMutation({
-        mutationFn: async (data: { name: string, emoji: string }) => {
-            return api.post('/categories', { ...data, type: transactionType });
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['categories'] });
-            setShowCategoryModal(false);
+        onError: () => {
+            Alert.alert('Error', 'Failed to create transaction. Check your inputs.');
         }
     });
 
     const onSubmit = (data: any) => {
-        if (!data.categoryId) {
-            Alert.alert('Required', 'Please select a category');
-            return;
-        }
+        if (!data.categoryId) return Alert.alert('Required', 'Please select a category');
+        if (!data.accountId) return Alert.alert('Required', 'Please select an account');
+        if (!data.amount || isNaN(parseFloat(data.amount))) return Alert.alert('Required', 'Please enter a valid amount');
         createTransaction.mutate(data);
     };
 
-    // Category Creation Form State
-    const [newCategoryName, setNewCategoryName] = useState('');
-    const [newCategoryEmoji, setNewCategoryEmoji] = useState('🍔'); // Default emoji
-
-    const handleCreateCategory = () => {
-        if (!newCategoryName) return;
-        createCategory.mutate({ name: newCategoryName, emoji: newCategoryEmoji });
-        setNewCategoryName('');
-    };
-
-    const filteredCategories = categories?.filter((c: any) => c.type === transactionType);
+    const filteredCategories = (categories || []).filter((c: any) => c.type === transactionType);
 
     return (
-        <SafeAreaView className="flex-1 bg-white">
-            <ScrollView className="p-6">
-                <Text className="text-2xl font-bold text-center mb-6">Add Transaction</Text>
-
-                {/* Type Switcher */}
-                <View className="flex-row bg-gray-100 p-1 rounded-xl mb-6">
-                    <TouchableOpacity
-                        className={clsx("flex-1 p-3 rounded-lg items-center", transactionType === 'income' ? "bg-white shadow-sm" : "")}
-                        onPress={() => setTransactionType('income')}
-                    >
-                        <Text className={clsx("font-bold", transactionType === 'income' ? "text-green-600" : "text-gray-500")}>Income</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        className={clsx("flex-1 p-3 rounded-lg items-center", transactionType === 'expense' ? "bg-white shadow-sm" : "")}
-                        onPress={() => setTransactionType('expense')}
-                    >
-                        <Text className={clsx("font-bold", transactionType === 'expense' ? "text-red-500" : "text-gray-500")}>Expense</Text>
-                    </TouchableOpacity>
-                </View>
-
-                {/* Amount Input */}
-                <Text className="text-gray-500 font-medium mb-2">Amount</Text>
-                <Controller
-                    control={control}
-                    name="amount"
-                    render={({ field: { onChange, value } }) => (
-                        <View className="flex-row items-center border border-gray-200 rounded-xl p-4 mb-6">
-                            <Text className="text-2xl font-bold text-gray-400 mr-2">$</Text>
-                            <TextInput
-                                className="text-3xl font-bold flex-1 text-gray-900"
-                                placeholder="0.00"
-                                keyboardType="numeric"
-                                value={value}
-                                onChangeText={onChange}
-                            />
-                        </View>
-                    )}
-                />
-
-                {/* Category Selection */}
-                <View className="flex-row justify-between items-center mb-2">
-                    <Text className="text-gray-500 font-medium">Category</Text>
-                    <TouchableOpacity onPress={() => setShowCategoryModal(true)}>
-                        <Text className="text-blue-500 font-bold">+ New Category</Text>
-                    </TouchableOpacity>
-                </View>
-
-                <Controller
-                    control={control}
-                    name="categoryId"
-                    render={({ field: { onChange, value } }) => (
-                        <View className="flex-row flex-wrap gap-3 mb-6">
-                            {filteredCategories?.map((cat: any) => (
-                                <TouchableOpacity
-                                    key={cat.id}
-                                    className={clsx(
-                                        "p-3 rounded-xl border flex-row items-center gap-2",
-                                        value === cat.id ? "bg-blue-50 border-blue-500" : "bg-gray-50 border-transparent"
-                                    )}
-                                    onPress={() => onChange(cat.id)}
-                                >
-                                    <Text>{cat.emoji || '📁'}</Text>
-                                    <Text className={clsx("font-medium", value === cat.id ? "text-blue-700" : "text-gray-700")}>{cat.name}</Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-                    )}
-                />
-
-                {/* Note Input */}
-                <Text className="text-gray-500 font-medium mb-2">Note (Optional)</Text>
-                <Controller
-                    control={control}
-                    name="note"
-                    render={({ field: { onChange, value } }) => (
-                        <TextInput
-                            className="border border-gray-200 rounded-xl p-4 mb-8 text-lg"
-                            placeholder="What is this for?"
-                            value={value}
-                            onChangeText={onChange}
-                        />
-                    )}
-                />
-
-                {/* Submit Button */}
-                <TouchableOpacity
-                    className="bg-blue-500 p-4 rounded-xl items-center shadow-lg shadow-blue-200"
-                    onPress={handleSubmit(onSubmit)}
-                >
-                    <Text className="text-white font-bold text-xl">Save Transaction</Text>
-                </TouchableOpacity>
-
-            </ScrollView>
-
-            {/* Create Category Modal */}
-            <Modal visible={showCategoryModal} animationType="slide" transparent>
-                <View className="flex-1 bg-black/50 justify-end">
-                    <View className="bg-white rounded-t-3xl p-6">
-                        <View className="flex-row justify-between items-center mb-6">
-                            <Text className="text-xl font-bold">New Category</Text>
-                            <TouchableOpacity onPress={() => setShowCategoryModal(false)}>
-                                <X color="gray" size={24} />
-                            </TouchableOpacity>
-                        </View>
-
-                        <Text className="text-gray-500 mb-2">Emoji</Text>
-                        <TextInput
-                            className="bg-gray-100 p-4 rounded-xl text-3xl mb-4 text-center"
-                            value={newCategoryEmoji}
-                            onChangeText={setNewCategoryEmoji}
-                            maxLength={2}
-                        />
-
-                        <Text className="text-gray-500 mb-2">Name</Text>
-                        <TextInput
-                            className="bg-gray-100 p-4 rounded-xl text-lg mb-6"
-                            placeholder="Category Name"
-                            value={newCategoryName}
-                            onChangeText={setNewCategoryName}
-                        />
-
-                        <TouchableOpacity
-                            className="bg-blue-500 p-4 rounded-xl items-center"
-                            onPress={handleCreateCategory}
-                        >
-                            <Text className="text-white font-bold text-lg">Create Category</Text>
+        <SafeAreaView className="flex-1 bg-appbg" edges={['top']}>
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+                <ScrollView className="px-6 py-4 flex-1" contentContainerStyle={{ paddingBottom: 100 }}>
+                    <View className="flex-row justify-between items-center mb-6">
+                        <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 bg-white items-center justify-center rounded-full shadow-sm">
+                            <Ionicons name="close" size={24} color="#1A2B5E" />
                         </TouchableOpacity>
-                        <View className="h-8" />
+                        <Text className="text-xl font-bold text-navy">New Transaction</Text>
+                        <View className="w-10" />
                     </View>
-                </View>
-            </Modal>
-=======
 
-import { View, Text } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+                    {/* Type Switcher */}
+                    <View className="flex-row bg-gray-200/60 p-1 rounded-full mb-6">
+                        <TouchableOpacity
+                            className={clsx("flex-1 py-3 rounded-full items-center", transactionType === 'EXPENSE' && "bg-white shadow-sm")}
+                            onPress={() => setTransactionType('EXPENSE')}
+                        >
+                            <Text className={clsx("font-bold text-sm", transactionType === 'EXPENSE' ? "text-danger" : "text-textsecondary")}>Expense</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            className={clsx("flex-1 py-3 rounded-full items-center", transactionType === 'INCOME' && "bg-white shadow-sm")}
+                            onPress={() => setTransactionType('INCOME')}
+                        >
+                            <Text className={clsx("font-bold text-sm", transactionType === 'INCOME' ? "text-success" : "text-textsecondary")}>Income</Text>
+                        </TouchableOpacity>
+                    </View>
 
-export default function Add() {
-    return (
-        <SafeAreaView className="flex-1 bg-blue-50 items-center justify-center">
-            <Text className="text-2xl font-bold text-blue-900">Add Transaction</Text>
-            <Text className="text-blue-500 mt-2">Form to add income/expense</Text>
->>>>>>> feature/frontend/tab-navigation-shell
+                    {/* Amount Input */}
+                    <View className="items-center mb-6">
+                        <Text className="text-textsecondary font-medium text-sm mb-2">Amount (LKR)</Text>
+                        <Controller
+                            control={control}
+                            name="amount"
+                            render={({ field: { onChange, value } }) => (
+                                <View className="flex-row items-center border-b-2 border-primary/20 pb-2 min-w-[150px] justify-center">
+                                    <Text className="text-3xl font-bold text-navy mr-1">Rs.</Text>
+                                    <TextInput
+                                        className="text-4xl font-bold text-navy"
+                                        placeholder="0.00"
+                                        placeholderTextColor="#9CA3AF"
+                                        keyboardType="numeric"
+                                        value={value}
+                                        onChangeText={onChange}
+                                        autoFocus
+                                    />
+                                </View>
+                            )}
+                        />
+                    </View>
+
+                    {/* Account Selection */}
+                    <Text className="text-textprimary font-bold text-base mb-3">Account</Text>
+                    <Controller
+                        control={control}
+                        name="accountId"
+                        render={({ field: { onChange, value } }) => (
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-6 flex-row gap-3">
+                                {accounts?.map((acc: any) => (
+                                    <TouchableOpacity
+                                        key={acc.id}
+                                        className={clsx(
+                                            "px-4 py-3 rounded-card border-2 mr-3 min-w-[100px] flex-row items-center gap-2",
+                                            value === acc.id ? "bg-primary/10 border-primary" : "bg-white border-transparent"
+                                        )}
+                                        onPress={() => onChange(acc.id)}
+                                    >
+                                        <Ionicons name={acc.type === 'CASH' ? 'cash-outline' : 'card-outline'} size={20} color={value === acc.id ? '#1A56E8' : '#6B7280'} />
+                                        <Text className={clsx("font-semibold text-sm", value === acc.id ? "text-primary" : "text-textprimary")}>{acc.name}</Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </ScrollView>
+                        )}
+                    />
+
+                    {/* Merchant & Note */}
+                    <Text className="text-textprimary font-bold text-base mb-3">Details</Text>
+                    <View className="bg-white rounded-card shadow-sm mb-6">
+                        <Controller
+                            control={control}
+                            name="merchant"
+                            render={({ field: { onChange, value } }) => (
+                                <View className="flex-row items-center border-b border-gray-100 px-4 py-3">
+                                    <View className="w-8">
+                                        <Ionicons name="storefront-outline" size={20} color="#9CA3AF" />
+                                    </View>
+                                    <TextInput
+                                        className="flex-1 text-base ml-2 text-textprimary"
+                                        placeholder="Merchant or Title"
+                                        placeholderTextColor="#9CA3AF"
+                                        value={value}
+                                        onChangeText={onChange}
+                                    />
+                                </View>
+                            )}
+                        />
+                        <Controller
+                            control={control}
+                            name="note"
+                            render={({ field: { onChange, value } }) => (
+                                <View className="flex-row items-center px-4 py-3">
+                                    <View className="w-8">
+                                        <Ionicons name="document-text-outline" size={20} color="#9CA3AF" />
+                                    </View>
+                                    <TextInput
+                                        className="flex-1 text-base ml-2 text-textprimary"
+                                        placeholder="Add a note (optional)"
+                                        placeholderTextColor="#9CA3AF"
+                                        value={value}
+                                        onChangeText={onChange}
+                                    />
+                                </View>
+                            )}
+                        />
+                    </View>
+
+                    {/* Category Selection */}
+                    <Text className="text-textprimary font-bold text-base mb-3">Category</Text>
+                    <Controller
+                        control={control}
+                        name="categoryId"
+                        render={({ field: { onChange, value } }) => (
+                            <View className="flex-row flex-wrap justify-between gap-y-4 mb-8">
+                                {filteredCategories?.map((cat: any) => {
+                                    const iconKey = cat.icon ?? "dots";
+                                    const icon = (ICON_MAP[iconKey] ?? "pricetag-outline") as any;
+                                    const color = cat.color ?? "#6B7280";
+                                    const isSelected = value === cat.id;
+
+                                    return (
+                                        <TouchableOpacity
+                                            key={cat.id}
+                                            className={clsx(
+                                                "w-[30%] items-center p-3 border-2 rounded-2xl",
+                                                isSelected ? "border-primary bg-primary/5" : "border-transparent bg-white shadow-sm"
+                                            )}
+                                            onPress={() => onChange(cat.id)}
+                                        >
+                                            <View className="w-12 h-12 rounded-full items-center justify-center mb-2" style={{ backgroundColor: `${color}20` }}>
+                                                <Ionicons name={icon} size={24} color={color} />
+                                            </View>
+                                            <Text className="text-xs text-center font-medium text-textsecondary" numberOfLines={1}>{cat.name}</Text>
+                                        </TouchableOpacity>
+                                    )
+                                })}
+                            </View>
+                        )}
+                    />
+
+                    {/* Submit Button */}
+                    <TouchableOpacity
+                        className="bg-primary py-4 rounded-full items-center shadow-lg mb-8"
+                        onPress={handleSubmit(onSubmit)}
+                        disabled={createTransaction.isPending}
+                    >
+                        <Text className="text-white font-bold text-lg">
+                            {createTransaction.isPending ? 'Saving...' : 'Save Transaction'}
+                        </Text>
+                    </TouchableOpacity>
+
+                </ScrollView>
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }

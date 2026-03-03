@@ -4,7 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { api } from "../../../lib/api/client";
+import { apiRequest } from "../../../lib/api/client";
+import { formatLKR } from "../../../utils/currency";
 
 interface Account {
     id: string;
@@ -15,39 +16,47 @@ interface Account {
     cardNetwork?: string;
 }
 
-function formatLKR(amount: number) {
-    return amount.toLocaleString("en-LK");
-}
-
 export default function Accounts() {
     const router = useRouter();
 
     const { data: accounts = [], isRefetching, refetch } = useQuery<Account[]>({
         queryKey: ["accounts"],
         queryFn: async () => {
-            const res = await api.get("/accounts");
-            return res.data.data as Account[];
+            return await apiRequest<Account[]>('get', '/accounts');
         },
+        initialData: [],
     });
 
     const bankAccounts = accounts.filter((a) => a.type === "BANK");
     const cashAccounts = accounts.filter((a) => a.type !== "BANK");
+    const allAccountsSorted = [...bankAccounts, ...cashAccounts];
 
     return (
         <SafeAreaView className="flex-1 bg-appbg" edges={["top"]}>
             {/* Header */}
-            <LinearGradient colors={["#A8C8F8", "#E8F0FF"]} className="px-4 pt-4 pb-4">
-                <View className="flex-row items-center gap-3">
-                    <TouchableOpacity onPress={() => router.back()}>
+            <LinearGradient colors={["#A8C8F8", "#D6E4FF"]} className="px-6 pt-4 pb-6 rounded-b-[30px]">
+                <View className="flex-row items-center justify-between mb-4 mt-2">
+                    <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 bg-white/50 rounded-full items-center justify-center">
                         <Ionicons name="chevron-back" size={24} color="#1A2B5E" />
                     </TouchableOpacity>
-                    <Text className="text-navy font-bold text-xl">Accounts</Text>
+                    <Text className="text-navy font-bold text-xl">My Accounts</Text>
+                    <TouchableOpacity onPress={() => { }} className="w-10 h-10 bg-white/50 rounded-full items-center justify-center">
+                        <Ionicons name="add" size={24} color="#1A2B5E" />
+                    </TouchableOpacity>
+                </View>
+
+                <View className="items-center mt-2">
+                    <Text className="text-textsecondary text-sm font-medium mb-1">Total Assets</Text>
+                    <Text className="text-navy text-4xl font-bold">
+                        {formatLKR(accounts.reduce((sum, acc) => sum + acc.balance, 0))}
+                    </Text>
                 </View>
             </LinearGradient>
 
             <FlatList
-                className="flex-1 px-4 pt-4"
-                data={[...bankAccounts, ...cashAccounts]}
+                className="flex-1 px-4 pt-6"
+                contentContainerStyle={{ paddingBottom: 100 }}
+                data={allAccountsSorted}
                 keyExtractor={(item) => item.id}
                 refreshControl={
                     <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#1A56E8" />
@@ -55,48 +64,53 @@ export default function Accounts() {
                 ListHeaderComponent={
                     <>
                         {bankAccounts.length > 0 && (
-                            <Text className="text-textbody font-bold text-base mb-3">Bank accounts</Text>
+                            <Text className="text-textsecondary text-xs uppercase font-bold tracking-wider mb-3 ml-2">Bank Accounts</Text>
                         )}
                     </>
                 }
                 renderItem={({ item, index }) => {
                     const isCashSection = item.type !== "BANK";
-                    const prevIsCash = index > 0 && accounts[index - 1]?.type !== "BANK";
+                    const prevIsCash = index > 0 && allAccountsSorted[index - 1]?.type !== "BANK";
+
                     return (
-                        <>
+                        <View>
                             {isCashSection && !prevIsCash && (
-                                <Text className="text-textbody font-bold text-base mt-4 mb-3">Cash</Text>
+                                <Text className="text-textsecondary text-xs uppercase font-bold tracking-wider mt-6 mb-3 ml-2">Cash & Wallets</Text>
                             )}
                             <TouchableOpacity
-                                className="transaction-row mb-3"
+                                className="bg-white p-4 rounded-card shadow-sm flex-row items-center mb-3 border border-gray-100"
                                 onPress={() => router.push(`/accounts/${item.id}` as any)}
                             >
-                                <View className="w-12 h-8 mr-3 items-center justify-center">
+                                <View className="w-12 h-12 rounded-full mr-4 items-center justify-center bg-primary/10">
                                     {item.type === "BANK" ? (
-                                        <Text className="text-primary font-bold text-xs">
-                                            {item.cardNetwork ?? "BANK"}
-                                        </Text>
+                                        <Ionicons name="business-outline" size={24} color="#1A56E8" />
                                     ) : (
-                                        <Ionicons name="layers-outline" size={28} color="#6B7280" />
+                                        <Ionicons name="wallet-outline" size={24} color="#10B981" />
                                     )}
                                 </View>
                                 <View className="flex-1">
-                                    <Text className="text-textprimary font-bold text-base">{item.name}</Text>
+                                    <Text className="text-textprimary font-bold text-base mb-0.5">{item.name}</Text>
                                     {item.cardNumber ? (
-                                        <Text className="text-textsecondary text-sm">***{item.cardNumber}</Text>
-                                    ) : null}
+                                        <Text className="text-textsecondary text-xs">{item.cardNetwork} •••• {item.cardNumber.slice(-4)}</Text>
+                                    ) : (
+                                        <Text className="text-textsecondary text-xs">Standard Account</Text>
+                                    )}
                                 </View>
-                                <Text className="text-textprimary font-bold text-base">
-                                    {formatLKR(item.balance)} LKR
+                                <Text className="text-navy font-bold text-base">
+                                    {formatLKR(item.balance)}
                                 </Text>
                             </TouchableOpacity>
-                        </>
+                        </View>
                     );
                 }}
-                ListFooterComponent={
-                    <TouchableOpacity className="items-center justify-center py-6">
-                        <Ionicons name="add-circle-outline" size={32} color="#9CA3AF" />
-                    </TouchableOpacity>
+                ListEmptyComponent={
+                    <View className="items-center py-16">
+                        <Ionicons name="card-outline" size={64} color="#D1D5DB" />
+                        <Text className="text-textprimary text-lg font-bold mt-4">No Accounts Found</Text>
+                        <Text className="text-textsecondary text-sm mt-2 text-center px-8">
+                            You haven't added any accounts yet. Tap the + icon to add your first account.
+                        </Text>
+                    </View>
                 }
             />
         </SafeAreaView>
