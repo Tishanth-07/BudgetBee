@@ -1,0 +1,93 @@
+diff --git a/node_modules/react-native-css-interop/.cache/android.js b/node_modules/react-native-css-interop/.cache/android.js
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/react-native-css-interop/.cache/ios.js b/node_modules/react-native-css-interop/.cache/ios.js
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/react-native-css-interop/.cache/macos.js b/node_modules/react-native-css-interop/.cache/macos.js
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/react-native-css-interop/.cache/native.js b/node_modules/react-native-css-interop/.cache/native.js
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/react-native-css-interop/.cache/windows.js b/node_modules/react-native-css-interop/.cache/windows.js
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/react-native-css-interop/dist/runtime/native/render-component.js b/node_modules/react-native-css-interop/dist/runtime/native/render-component.js
+index eba25ec..cff95f8 100644
+--- a/node_modules/react-native-css-interop/dist/runtime/native/render-component.js
++++ b/node_modules/react-native-css-interop/dist/runtime/native/render-component.js
+@@ -131,8 +131,21 @@ function stringify(object) {
+         }
+         seen.add(value);
+         const newValue = Array.isArray(value) ? [] : {};
+-        for (const entry of Object.entries(value)) {
+-            newValue[entry[0]] = replace(entry[0], entry[1]);
++        let entries;
++        try {
++            entries = Object.entries(value);
++        }
++        catch (_) {
++            seen.delete(value);
++            return "[Unserializable]";
++        }
++        for (const entry of entries) {
++            try {
++                newValue[entry[0]] = replace(entry[0], entry[1]);
++            }
++            catch (_) {
++                newValue[entry[0]] = "[Unserializable]";
++            }
+         }
+         seen.delete(value);
+         return newValue;
+diff --git a/node_modules/react-native-css-interop/src/__tests__/debugging.test.tsx b/node_modules/react-native-css-interop/src/__tests__/debugging.test.tsx
+index cea518c..faf6607 100644
+--- a/node_modules/react-native-css-interop/src/__tests__/debugging.test.tsx
++++ b/node_modules/react-native-css-interop/src/__tests__/debugging.test.tsx
+@@ -41,8 +41,8 @@ describe("debugging", () => {
+     "className": "my-class"
+   },
+   "props": {
+-    "ref": null,
+     "testID": "debugClassName",
++    "ref": null,
+     "style": {
+       "color": "#ef4444",
+       "padding": 10
+@@ -79,8 +79,8 @@ describe("debugging", () => {
+     "className": "my-class"
+   },
+   "props": {
+-    "ref": null,
+     "testID": "debugClassName",
++    "ref": null,
+     "style": {
+       "color": "#ef4444 (animated value)",
+       "padding": 10
+@@ -115,8 +115,8 @@ describe("debugging", () => {
+     "className": "my-class"
+   },
+   "props": {
+-    "ref": null,
+     "testID": "debugClassName",
++    "ref": null,
+     "style": {
+       "color": "hsl(0, 84.2%, 50%)"
+     }
+@@ -153,7 +153,6 @@ describe("debugging", () => {
+     "className": "my-class"
+   },
+   "props": {
+-    "ref": null,
+     "testID": "debugClassName",
+     "onPressIn": "[Function]",
+     "onPressOut": "[Function]",
+@@ -163,6 +162,7 @@ describe("debugging", () => {
+     "onBlur": "[Function]",
+     "onPress": "[Function]",
+     "onLayout": "[Function]",
++    "ref": null,
+     "style": {
+       "color": "#ef4444"
+     }
