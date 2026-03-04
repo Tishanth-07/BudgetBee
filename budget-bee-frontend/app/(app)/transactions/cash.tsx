@@ -4,7 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { api } from "../../../lib/api/client";
+import { apiRequest } from "../../../lib/api/client";
+import { formatLKR } from "../../../utils/currency";
 
 interface Transaction {
     id: string;
@@ -15,9 +16,7 @@ interface Transaction {
     category?: { name: string; color: string; icon: string };
 }
 
-function formatLKR(amount: number) {
-    return amount.toLocaleString("en-LK");
-}
+
 
 function formatDate(date: string) {
     return new Date(date).toLocaleDateString("en-LK", {
@@ -46,9 +45,9 @@ export default function CashTransactions() {
     const { data: txData, isRefetching, refetch } = useQuery<{ items: Transaction[]; total: number }>({
         queryKey: ["transactions", "cash"],
         queryFn: async () => {
-            const res = await api.get("/transactions", { params: { limit: 50 } });
-            return res.data.data as { items: Transaction[]; total: number };
+            return await apiRequest<{ items: Transaction[]; total: number }>('get', '/transactions', null, { params: { limit: 50 } });
         },
+        initialData: { items: [], total: 0 },
     });
 
     const transactions = txData?.items ?? [];

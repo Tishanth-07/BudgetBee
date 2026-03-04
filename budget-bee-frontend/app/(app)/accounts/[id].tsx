@@ -4,7 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { api } from "../../../lib/api/client";
+import { apiRequest } from "../../../lib/api/client";
+import { formatLKR } from "../../../utils/currency";
 
 interface Transaction {
     id: string;
@@ -26,9 +27,7 @@ interface AccountDetail {
     expiry?: string;
 }
 
-function formatLKR(amount: number) {
-    return amount.toLocaleString("en-LK");
-}
+
 
 function formatDate(date: string) {
     return new Date(date).toLocaleDateString("en-LK", {
@@ -65,8 +64,7 @@ export default function AccountDetail() {
     const { data: account } = useQuery<AccountDetail>({
         queryKey: ["account", id],
         queryFn: async () => {
-            const res = await api.get(`/accounts/${id}`);
-            return res.data.data as AccountDetail;
+            return await apiRequest<AccountDetail>('get', `/accounts/${id}`);
         },
         enabled: !!id,
     });
@@ -74,9 +72,9 @@ export default function AccountDetail() {
     const { data: txData, isRefetching, refetch } = useQuery<{ items: Transaction[] }>({
         queryKey: ["transactions", "account", id],
         queryFn: async () => {
-            const res = await api.get("/transactions", { params: { accountId: id, limit: 20 } });
-            return res.data.data as { items: Transaction[] };
+            return await apiRequest<{ items: Transaction[] }>('get', '/transactions', null, { params: { accountId: id, limit: 20 } });
         },
+        initialData: { items: [] },
         enabled: !!id,
     });
 

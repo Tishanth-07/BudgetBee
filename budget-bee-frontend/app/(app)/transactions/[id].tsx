@@ -9,7 +9,8 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { api } from "../../../lib/api/client";
+import { apiRequest, api } from "../../../lib/api/client";
+import { formatLKR } from "../../../utils/currency";
 
 interface TransactionDetail {
   id: string;
@@ -33,9 +34,7 @@ interface CategoryOption {
   color: string;
 }
 
-function formatLKR(amount: number) {
-  return amount.toLocaleString("en-LK");
-}
+
 
 function formatDateTime(date: string) {
   const d = new Date(date);
@@ -57,17 +56,16 @@ export default function TransactionDetailScreen() {
     queryKey: ["transaction", id],
     enabled: !!id,
     queryFn: async () => {
-      const res = await api.get(`/transactions/${id}`);
-      return res.data.data as TransactionDetail;
+      return await apiRequest<TransactionDetail>('get', `/transactions/${id}`);
     },
   });
 
   const { data: otherCategories } = useQuery<CategoryOption[]>({
     queryKey: ["categories"],
     queryFn: async () => {
-      const res = await api.get("/categories");
-      return res.data.data as CategoryOption[];
+      return await apiRequest<CategoryOption[]>('get', '/categories');
     },
+    initialData: [],
   });
 
   const deleteMutation = useMutation({
