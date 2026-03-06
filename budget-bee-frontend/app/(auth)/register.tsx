@@ -14,8 +14,12 @@ export default function Register() {
     const onSubmit = async (data: any) => {
         try {
             const res = await api.post('/auth/register', data);
-            await login(res.data.token, res.data.user);
-            router.replace('/(app)');
+            if (res.data.success) {
+                await login(res.data.data.accessToken, res.data.data.refreshToken, res.data.data.user);
+                router.replace('/(app)');
+            } else {
+                setError(res.data.message || 'Registration failed');
+            }
         } catch (err: any) {
             setError(err.response?.data?.message || 'Registration failed');
         }

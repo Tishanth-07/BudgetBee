@@ -1,5 +1,9 @@
-node_modules
+﻿node_modules
 .env
 dist
 .expo
 .DS_Store
+
+# Agent
+.agent/
+.agent
