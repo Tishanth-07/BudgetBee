@@ -1,6 +1,8 @@
 import { Slot, useRouter, useSegments, useRootNavigationState, SplashScreen } from 'expo-router';
 import { useEffect } from 'react';
-import { View } from 'react-native';
+import { View, LogBox } from 'react-native';
+
+LogBox.ignoreLogs(['SafeAreaView has been deprecated']);
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuthStore } from '../store/authStore';
 import '../global.css';
