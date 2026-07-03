@@ -1,18 +1,20 @@
-import { View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { useAuthStore } from '../../store/authStore';
 import { api } from '../../lib/api/client';
 import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Mail, Lock, User, AlertCircle } from 'lucide-react-native';
+import { Mail, Lock, User, AlertCircle, Eye, EyeOff } from 'lucide-react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 export default function Register() {
-    const { control, handleSubmit } = useForm();
+    const { control, handleSubmit, formState: { errors } } = useForm();
     const login = useAuthStore((state) => state.login);
     const router = useRouter();
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const onSubmit = async (data: any) => {
         setError('');
@@ -20,8 +22,8 @@ export default function Register() {
         try {
             const res = await api.post('/auth/register', data);
             if (res.data.success) {
-                await login(res.data.data.accessToken, res.data.data.refreshToken, res.data.data.user);
-                router.replace('/(app)');
+                // Do not auto-login. Redirect to verify page.
+                router.push({ pathname: '/(auth)/verify', params: { email: data.email } });
             } else {
                 setError(res.data.message || 'Registration failed');
             }
@@ -34,12 +36,13 @@ export default function Register() {
 
     return (
         <SafeAreaView className="flex-1 bg-white" edges={['top', 'bottom']}>
-            <KeyboardAvoidingView 
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                className="flex-1"
+            <KeyboardAwareScrollView 
+                contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingBottom: 24 }} 
+                keyboardShouldPersistTaps="handled"
+                enableOnAndroid={true}
+                showsVerticalScrollIndicator={false}
             >
-                <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 40 }}>
-                    <View className="mb-10 items-center">
+                <View className="mb-10 mt-10 items-center">
                         <Text className="text-4xl font-extrabold text-blue-900 tracking-tight">Create Account</Text>
                         <Text className="text-gray-500 text-base mt-2">Start your financial journey today</Text>
                     </View>
@@ -55,17 +58,22 @@ export default function Register() {
                         <Controller
                             control={control}
                             name="firstName"
-                            rules={{ required: true }}
+                            rules={{ required: 'First Name is required' }}
                             render={({ field: { onChange, value } }) => (
-                                <View className="flex-row items-center bg-gray-50 border border-gray-200 rounded-2xl px-4 h-14 focus:border-blue-500 focus:bg-white">
-                                    <User size={20} color="#9ca3af" />
-                                    <TextInput
-                                        className="flex-1 h-full ml-3 text-base text-gray-900"
-                                        placeholder="First Name"
-                                        placeholderTextColor="#9ca3af"
-                                        value={value}
-                                        onChangeText={onChange}
-                                    />
+                                <View>
+                                    <View className={`flex-row items-center bg-gray-50 border ${errors.firstName ? 'border-red-500' : 'border-gray-200'} rounded-2xl px-4 h-14 focus:border-blue-500 focus:bg-white`}>
+                                        <User size={20} color={errors.firstName ? "#ef4444" : "#9ca3af"} />
+                                        <TextInput
+                                            className="flex-1 h-full ml-3 text-base text-gray-900"
+                                            placeholder="First Name"
+                                            placeholderTextColor="#9ca3af"
+                                            value={value}
+                                            onChangeText={onChange}
+                                        />
+                                    </View>
+                                    {errors.firstName && (
+                                        <Text className="text-red-500 text-sm mt-1 ml-1">{errors.firstName.message as string}</Text>
+                                    )}
                                 </View>
                             )}
                         />
@@ -73,17 +81,22 @@ export default function Register() {
                         <Controller
                             control={control}
                             name="lastName"
-                            rules={{ required: true }}
+                            rules={{ required: 'Last Name is required' }}
                             render={({ field: { onChange, value } }) => (
-                                <View className="flex-row items-center bg-gray-50 border border-gray-200 rounded-2xl px-4 h-14 focus:border-blue-500 focus:bg-white">
-                                    <User size={20} color="#9ca3af" />
-                                    <TextInput
-                                        className="flex-1 h-full ml-3 text-base text-gray-900"
-                                        placeholder="Last Name"
-                                        placeholderTextColor="#9ca3af"
-                                        value={value}
-                                        onChangeText={onChange}
-                                    />
+                                <View>
+                                    <View className={`flex-row items-center bg-gray-50 border ${errors.lastName ? 'border-red-500' : 'border-gray-200'} rounded-2xl px-4 h-14 focus:border-blue-500 focus:bg-white`}>
+                                        <User size={20} color={errors.lastName ? "#ef4444" : "#9ca3af"} />
+                                        <TextInput
+                                            className="flex-1 h-full ml-3 text-base text-gray-900"
+                                            placeholder="Last Name"
+                                            placeholderTextColor="#9ca3af"
+                                            value={value}
+                                            onChangeText={onChange}
+                                        />
+                                    </View>
+                                    {errors.lastName && (
+                                        <Text className="text-red-500 text-sm mt-1 ml-1">{errors.lastName.message as string}</Text>
+                                    )}
                                 </View>
                             )}
                         />
@@ -91,19 +104,30 @@ export default function Register() {
                         <Controller
                             control={control}
                             name="email"
-                            rules={{ required: true }}
+                            rules={{ 
+                                required: 'Email is required',
+                                pattern: {
+                                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                                    message: 'Invalid email address'
+                                }
+                            }}
                             render={({ field: { onChange, value } }) => (
-                                <View className="flex-row items-center bg-gray-50 border border-gray-200 rounded-2xl px-4 h-14 focus:border-blue-500 focus:bg-white">
-                                    <Mail size={20} color="#9ca3af" />
-                                    <TextInput
-                                        className="flex-1 h-full ml-3 text-base text-gray-900"
-                                        placeholder="Email Address"
-                                        placeholderTextColor="#9ca3af"
-                                        value={value}
-                                        onChangeText={onChange}
-                                        autoCapitalize="none"
-                                        keyboardType="email-address"
-                                    />
+                                <View>
+                                    <View className={`flex-row items-center bg-gray-50 border ${errors.email ? 'border-red-500' : 'border-gray-200'} rounded-2xl px-4 h-14 focus:border-blue-500 focus:bg-white`}>
+                                        <Mail size={20} color={errors.email ? "#ef4444" : "#9ca3af"} />
+                                        <TextInput
+                                            className="flex-1 h-full ml-3 text-base text-gray-900"
+                                            placeholder="Email Address"
+                                            placeholderTextColor="#9ca3af"
+                                            value={value}
+                                            onChangeText={onChange}
+                                            autoCapitalize="none"
+                                            keyboardType="email-address"
+                                        />
+                                    </View>
+                                    {errors.email && (
+                                        <Text className="text-red-500 text-sm mt-1 ml-1">{errors.email.message as string}</Text>
+                                    )}
                                 </View>
                             )}
                         />
@@ -111,18 +135,40 @@ export default function Register() {
                         <Controller
                             control={control}
                             name="password"
-                            rules={{ required: true }}
+                            rules={{ 
+                                required: 'Password is required',
+                                pattern: {
+                                    value: /^(?=.*[A-Z])(?=.*[0-9])(?=.*[^a-zA-Z0-9]).{8,}$/,
+                                    message: 'Password must be 8+ chars with uppercase, number, and symbol'
+                                }
+                            }}
                             render={({ field: { onChange, value } }) => (
-                                <View className="flex-row items-center bg-gray-50 border border-gray-200 rounded-2xl px-4 h-14 focus:border-blue-500 focus:bg-white">
-                                    <Lock size={20} color="#9ca3af" />
-                                    <TextInput
-                                        className="flex-1 h-full ml-3 text-base text-gray-900"
-                                        placeholder="Password"
-                                        placeholderTextColor="#9ca3af"
-                                        value={value}
-                                        onChangeText={onChange}
-                                        secureTextEntry
-                                    />
+                                <View>
+                                    <View className={`flex-row items-center bg-gray-50 border ${errors.password ? 'border-red-500' : 'border-gray-200'} rounded-2xl px-4 h-14 focus:border-blue-500 focus:bg-white`}>
+                                        <Lock size={20} color={errors.password ? "#ef4444" : "#9ca3af"} />
+                                        <TextInput
+                                            className="flex-1 h-full ml-3 text-base text-gray-900"
+                                            placeholder="Password"
+                                            placeholderTextColor="#9ca3af"
+                                            value={value}
+                                            onChangeText={onChange}
+                                            secureTextEntry={!showPassword}
+                                        />
+                                        <TouchableOpacity 
+                                            onPress={() => setShowPassword(!showPassword)}
+                                            className="p-2"
+                                            activeOpacity={0.7}
+                                        >
+                                            {showPassword ? (
+                                                <Eye size={20} color="#9ca3af" />
+                                            ) : (
+                                                <EyeOff size={20} color="#9ca3af" />
+                                            )}
+                                        </TouchableOpacity>
+                                    </View>
+                                    {errors.password && (
+                                        <Text className="text-red-500 text-sm mt-1 ml-1">{errors.password.message as string}</Text>
+                                    )}
                                 </View>
                             )}
                         />
@@ -149,8 +195,7 @@ export default function Register() {
                             </TouchableOpacity>
                         </Link>
                     </View>
-                </ScrollView>
-            </KeyboardAvoidingView>
+            </KeyboardAwareScrollView>
         </SafeAreaView>
     );
 }

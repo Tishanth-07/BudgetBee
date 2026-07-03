@@ -38,11 +38,11 @@ export default function Onboarding() {
             {/* Footer */}
             <View className="px-6 pb-12 pt-4">
                 <TouchableOpacity
-                    className="w-full bg-blue-600 py-4 rounded-2xl shadow-md flex-row justify-center items-center active:bg-blue-700"
+                    className="h-14 bg-blue-600 rounded-2xl shadow-md flex-row justify-center items-center active:bg-blue-700"
                     onPress={() => router.push('/(auth)/login')}
                     activeOpacity={0.8}
                 >
-                    <Text className="text-white font-bold text-xl">Continue to Login</Text>
+                    <Text className="font-bold text-white text-lg">Continue to Login</Text>
                 </TouchableOpacity>
             </View>
         </SafeAreaView>

@@ -27,11 +27,11 @@ export default function Welcome() {
                 {/* Bottom Section */}
                 <View className="w-full gap-y-4">
                     <TouchableOpacity
-                        className="w-full bg-blue-600 py-4 rounded-2xl shadow-md flex-row justify-center items-center active:bg-blue-700"
+                        className="h-14 bg-blue-600 rounded-2xl shadow-md flex-row justify-center items-center active:bg-blue-700"
                         onPress={() => router.push('/(auth)/onboarding')}
                         activeOpacity={0.8}
                     >
-                        <Text className="text-white font-bold text-xl mr-2">Get Started</Text>
+                        <Text className="text-white font-bold text-lg mr-2">Get Started</Text>
                         <ArrowRight size={24} color="#ffffff" strokeWidth={2.5} />
                     </TouchableOpacity>
                     
