@@ -24,6 +24,7 @@ model User {
   expenses         Expense[]
   incomeSources    IncomeSource[]
   householdMembers HouseholdMember[]
+  refreshTokens    RefreshToken[]
 }
 
 model Account {
@@ -130,6 +131,9 @@ model Transaction {
   account     Account    @relation(fields: [accountId], references: [id])
   user        User       @relation(fields: [userId], references: [id])
   household   Household? @relation(fields: [householdId], references: [id])
+
+  @@index([userId, date])
+  @@index([accountId, date])
 }
 
 model IncomeSource {
@@ -152,4 +156,17 @@ model VerificationCode {
   createdAt DateTime @default(now())
 
   @@index([email, type])
+}
+
+model RefreshToken {
+  id          String   @id @default(uuid())
+  hashedToken String   @unique
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  revoked     Boolean  @default(false)
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
 }

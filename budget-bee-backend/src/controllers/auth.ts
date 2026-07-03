@@ -4,6 +4,37 @@ import jwt from 'jsonwebtoken';
 import { prisma } from '../utils/prisma.js';
 import { z } from 'zod';
 import { config } from '../config/env.js';
+import crypto from 'crypto';
+
+const MAX_DEVICES = 5;
+
+const generateRefreshToken = () => crypto.randomBytes(40).toString('hex');
+const hashToken = (token: string) => crypto.createHash('sha256').update(token).digest('hex');
+
+async function manageRefreshTokens(userId: string, newHashedToken: string, oldHashedToken?: string) {
+    if (oldHashedToken) {
+        await prisma.refreshToken.deleteMany({ where: { hashedToken: oldHashedToken } });
+    }
+    
+    const activeTokens = await prisma.refreshToken.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' }
+    });
+    
+    if (activeTokens.length >= MAX_DEVICES) {
+        const tokensToDelete = activeTokens.slice(MAX_DEVICES - 1).map((t: any) => t.id);
+        await prisma.refreshToken.deleteMany({ where: { id: { in: tokensToDelete } } });
+    }
+    
+    await prisma.refreshToken.create({
+        data: {
+            hashedToken: newHashedToken,
+            userId,
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+        }
+    });
+}
+
 
 const passwordValidation = z.string()
     .min(8, 'Password must be at least 8 characters')
@@ -186,11 +217,9 @@ export const login = async (req: Request, res: Response) => {
             process.env.JWT_SECRET || config.JWT_SECRET,
             { expiresIn: '15m' }
         );
-        const refreshToken = jwt.sign(
-            { userId: user.id },
-            process.env.JWT_REFRESH_SECRET || config.JWT_REFRESH_SECRET || 'secret',
-            { expiresIn: '7d' }
-        );
+        const refreshToken = generateRefreshToken();
+        const hashedRefreshToken = hashToken(refreshToken);
+        await manageRefreshTokens(user.id, hashedRefreshToken);
 
         return res.json({
             success: true,
@@ -230,20 +259,22 @@ export const refreshToken = async (req: Request, res: Response) => {
             });
         }
 
-        const payload = jwt.verify(
-            refreshToken,
-            process.env.JWT_REFRESH_SECRET || config.JWT_REFRESH_SECRET || 'secret'
-        ) as { userId: string };
+        const hashedOldToken = hashToken(refreshToken);
+        const record = await prisma.refreshToken.findUnique({
+            where: { hashedToken: hashedOldToken },
+            include: { user: true }
+        });
 
-        const user = await prisma.user.findUnique({ where: { id: payload.userId } });
-        if (!user) {
+        if (!record || record.revoked || record.expiresAt < new Date()) {
             return res.status(401).json({
                 success: false,
                 data: null,
-                message: 'User not found',
+                message: 'Invalid or expired refresh token',
                 error: 'UNAUTHORIZED'
             });
         }
+
+        const user = record.user;
 
         const newAccessToken = jwt.sign(
             { userId: user.id, email: user.email },
@@ -251,11 +282,9 @@ export const refreshToken = async (req: Request, res: Response) => {
             { expiresIn: '15m' }
         );
 
-        const newRefreshToken = jwt.sign(
-            { userId: user.id },
-            process.env.JWT_REFRESH_SECRET || config.JWT_REFRESH_SECRET || 'secret',
-            { expiresIn: '7d' }
-        );
+        const newRefreshToken = generateRefreshToken();
+        const newHashedToken = hashToken(newRefreshToken);
+        await manageRefreshTokens(user.id, newHashedToken, hashedOldToken);
 
         return res.json({
             success: true,
@@ -297,7 +326,8 @@ export const verifyEmail = async (req: Request, res: Response) => {
         await prisma.verificationCode.deleteMany({ where: { email, type: 'REGISTER' } });
 
         const accessToken = jwt.sign({ userId: user.id, email: user.email }, process.env.JWT_SECRET || config.JWT_SECRET, { expiresIn: '15m' });
-        const refreshToken = jwt.sign({ userId: user.id }, process.env.JWT_REFRESH_SECRET || config.JWT_REFRESH_SECRET || 'secret', { expiresIn: '7d' });
+        const refreshToken = generateRefreshToken();
+        await manageRefreshTokens(user.id, hashToken(refreshToken));
 
         return res.json({
             success: true,
