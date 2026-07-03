@@ -1,18 +1,33 @@
 import { Slot, useRouter, useSegments, useRootNavigationState, SplashScreen } from 'expo-router';
 import { useEffect } from 'react';
-import { View, LogBox } from 'react-native';
+import { View, Text, LogBox } from 'react-native';
 
 LogBox.ignoreLogs(['SafeAreaView has been deprecated']);
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNetInfo } from '@react-native-community/netinfo';
 import { useAuthStore } from '../store/authStore';
 import '../global.css';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: {
+            gcTime: 1000 * 60 * 60 * 24, // 24 hours
+        },
+    },
+});
+
+const asyncStoragePersister = createAsyncStoragePersister({
+    storage: AsyncStorage,
+});
 
 function InitialLayout() {
+    const netInfo = useNetInfo();
     const { isAuthenticated, isReady, loadToken } = useAuthStore();
     const segments = useSegments();
     const router = useRouter();
@@ -37,13 +52,25 @@ function InitialLayout() {
         SplashScreen.hideAsync();
     }, [isAuthenticated, isReady, segments, navigationState?.key]);
 
-    return <Slot />;
+    return (
+        <View style={{ flex: 1 }}>
+            {!netInfo.isConnected && netInfo.type !== 'unknown' && (
+                <View className="bg-red-500 py-1 items-center z-50">
+                    <Text className="text-white text-xs font-semibold">You are offline. Showing cached data.</Text>
+                </View>
+            )}
+            <Slot />
+        </View>
+    );
 }
 
 export default function RootLayout() {
     return (
-        <QueryClientProvider client={queryClient}>
+        <PersistQueryClientProvider 
+            client={queryClient} 
+            persistOptions={{ persister: asyncStoragePersister, maxAge: 1000 * 60 * 60 * 24 }}
+        >
             <InitialLayout />
-        </QueryClientProvider>
+        </PersistQueryClientProvider>
     );
 }
