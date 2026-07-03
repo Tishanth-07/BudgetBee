@@ -6,10 +6,12 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 const envSchema = z.object({
     NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-    PORT: z.string().transform((val) => parseInt(val, 10)).default('3000'),
+    PORT: z.coerce.number().default(3000),
     DATABASE_URL: z.string(),
     JWT_SECRET: z.string().default('supersecret'),
     JWT_REFRESH_SECRET: z.string().default('superrefreshsecret'),
+    EMAIL_USER: z.string(),
+    EMAIL_PASS: z.string(),
 });
 
 const parsed = envSchema.safeParse(process.env);

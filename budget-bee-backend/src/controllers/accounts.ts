@@ -72,11 +72,6 @@ export const getAccountById = async (req: AuthRequest, res: Response, next: Next
             where: { id, userId, isActive: true },
             include: {
                 transactions: {
-                    where: {
-                        date: {
-                            gte: new Date(new Date().setHours(0, 0, 0, 0)),
-                        },
-                    },
                     orderBy: { date: 'desc' },
                     take: 50,
                     include: {

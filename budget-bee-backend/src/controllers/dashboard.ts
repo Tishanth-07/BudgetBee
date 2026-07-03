@@ -19,6 +19,8 @@ export const getSummary = async (req: AuthRequest, res: Response, next: NextFunc
                 userId,
                 date: { gte: startOfMonth, lte: endOfMonth },
             },
+            include: { category: true, account: true },
+            orderBy: { date: 'desc' },
         });
 
         const income = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
