@@ -11,14 +11,15 @@ interface IncomeSource {
     id: string;
     name: string;
     amount: number;
-    frequencyDays: number;
-    nextDate: string;
-    isActive: boolean;
-    account?: {
-        name: string;
-        type: "BANK" | "CASH" | "CARD";
-    };
+    frequency: string; // "Monthly" | "Weekly" | "Bi-weekly" | "Annually"
 }
+
+const FREQUENCY_MULTIPLIER: Record<string, number> = {
+    'Monthly': 1,
+    'Weekly': 4.33,
+    'Bi-weekly': 2.17,
+    'Annually': 1 / 12,
+};
 
 export default function Income() {
     const router = useRouter();
@@ -31,13 +32,9 @@ export default function Income() {
         initialData: [],
     });
 
-    const activeIncome = sources.filter(s => s.isActive);
-    const inactiveIncome = sources.filter(s => !s.isActive);
-
-    const monthlyProjected = sources.filter(s => s.isActive).reduce((acc, source) => {
-        // approximate monthly income based on frequency
-        const timesPerMonth = 30 / source.frequencyDays;
-        return acc + (source.amount * timesPerMonth);
+    const monthlyProjected = sources.reduce((acc, source) => {
+        const multiplier = FREQUENCY_MULTIPLIER[source.frequency] ?? 1;
+        return acc + (source.amount * multiplier);
     }, 0);
 
     return (
@@ -64,46 +61,28 @@ export default function Income() {
             <FlatList
                 className="flex-1 px-4 pt-6"
                 contentContainerStyle={{ paddingBottom: 100 }}
-                data={[...activeIncome, ...inactiveIncome]}
+                data={sources}
                 keyExtractor={(item) => item.id}
                 refreshControl={
                     <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#1A56E8" />
                 }
-                ListHeaderComponent={
-                    <>
-                        {activeIncome.length > 0 && (
-                            <Text className="text-textsecondary text-xs uppercase font-bold tracking-wider mb-3 ml-2">Active Sources</Text>
-                        )}
-                    </>
-                }
-                renderItem={({ item, index }) => {
-                    const isInactiveSection = !item.isActive;
-                    const prevIsInactive = index > 0 && !sources[index - 1]?.isActive;
-
+                renderItem={({ item }) => {
                     return (
-                        <View>
-                            {isInactiveSection && !prevIsInactive && (
-                                <Text className="text-textsecondary text-xs uppercase font-bold tracking-wider mt-6 mb-3 ml-2">Inactive / Past</Text>
-                            )}
-                            <View className={`bg-white p-4 rounded-card shadow-sm flex-row items-center mb-3 border border-gray-100 ${!item.isActive ? 'opacity-60' : ''}`}>
-                                <View className="w-12 h-12 rounded-full mr-4 items-center justify-center bg-success/10">
-                                    <Ionicons name="cash-outline" size={24} color="#10B981" />
+                        <View className="bg-white p-4 rounded-card shadow-sm flex-row items-center mb-3 border border-gray-100">
+                            <View className="w-12 h-12 rounded-full mr-4 items-center justify-center bg-success/10">
+                                <Ionicons name="cash-outline" size={24} color="#10B981" />
+                            </View>
+                            <View className="flex-1">
+                                <Text className="text-textprimary font-bold text-base mb-0.5">{item.name}</Text>
+                                <View className="flex-row items-center">
+                                    <Ionicons name="repeat-outline" size={12} color="#9CA3AF" />
+                                    <Text className="text-textsecondary text-xs ml-1">{item.frequency}</Text>
                                 </View>
-                                <View className="flex-1">
-                                    <Text className="text-textprimary font-bold text-base mb-0.5">{item.name}</Text>
-                                    <View className="flex-row items-center">
-                                        <Ionicons name="repeat-outline" size={12} color="#9CA3AF" />
-                                        <Text className="text-textsecondary text-xs ml-1">Every {item.frequencyDays} days</Text>
-                                    </View>
-                                </View>
-                                <View className="items-end">
-                                    <Text className="text-success font-bold text-base">
-                                        +{formatLKR(item.amount)}
-                                    </Text>
-                                    <Text className="text-textsecondary text-xs mt-1">
-                                        To {item.account?.name || 'Unknown'}
-                                    </Text>
-                                </View>
+                            </View>
+                            <View className="items-end">
+                                <Text className="text-success font-bold text-base">
+                                    +{formatLKR(item.amount)}
+                                </Text>
                             </View>
                         </View>
                     );
@@ -121,3 +100,4 @@ export default function Income() {
         </SafeAreaView>
     );
 }
+

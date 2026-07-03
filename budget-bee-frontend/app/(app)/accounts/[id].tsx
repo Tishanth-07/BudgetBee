@@ -25,6 +25,7 @@ interface AccountDetail {
     cardNetwork?: string;
     cardHolder?: string;
     expiry?: string;
+    transactions?: Transaction[];
 }
 
 
@@ -61,7 +62,7 @@ export default function AccountDetail() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const router = useRouter();
 
-    const { data: account } = useQuery<AccountDetail>({
+    const { data: account, isRefetching, refetch } = useQuery<AccountDetail>({
         queryKey: ["account", id],
         queryFn: async () => {
             return await apiRequest<AccountDetail>('get', `/accounts/${id}`);
@@ -69,16 +70,7 @@ export default function AccountDetail() {
         enabled: !!id,
     });
 
-    const { data: txData, isRefetching, refetch } = useQuery<{ items: Transaction[] }>({
-        queryKey: ["transactions", "account", id],
-        queryFn: async () => {
-            return await apiRequest<{ items: Transaction[] }>('get', '/transactions', null, { params: { accountId: id, limit: 20 } });
-        },
-        initialData: { items: [] },
-        enabled: !!id,
-    });
-
-    const transactions = txData?.items ?? [];
+    const transactions = account?.transactions ?? [];
 
     return (
         <SafeAreaView className="flex-1 bg-appbg" edges={["top"]}>
@@ -160,10 +152,10 @@ export default function AccountDetail() {
                                 </Text>
                             </View>
                             <Text
-                                className={`font-bold text-base ${item.type === "INCOME" ? "text-success" : "text-textprimary"
+                                className={`font-bold text-base ${item.type?.toUpperCase() === "INCOME" ? "text-success" : "text-textprimary"
                                     }`}
                             >
-                                {item.type === "INCOME" ? "+" : "-"}{formatLKR(item.amount)} LKR
+                                {item.type?.toUpperCase() === "INCOME" ? "+" : "-"}{formatLKR(item.amount)} LKR
                             </Text>
                         </View>
                     );

@@ -36,6 +36,19 @@ interface CategoryOption {
 
 
 
+const ICON_MAP: Record<string, string> = {
+  fork: "restaurant-outline",
+  car: "car-outline",
+  house: "home-outline",
+  stethoscope: "medkit-outline",
+  "gift-box": "gift-outline",
+  diamond: "diamond-outline",
+  heart: "heart-outline",
+  pants: "bag-outline",
+  paw: "paw-outline",
+  dots: "pricetag-outline",
+};
+
 function formatDateTime(date: string) {
   const d = new Date(date);
   return d.toLocaleString(undefined, {
@@ -140,7 +153,7 @@ export default function TransactionDetailScreen() {
               style={{ backgroundColor: `${tx?.category.color ?? "#22C55E"}18` }}
             >
               <Ionicons
-                name={(tx?.category.icon as any) ?? "restaurant-outline"}
+                name={(ICON_MAP[tx?.category.icon ?? "dots"] ?? "pricetag-outline") as any}
                 size={28}
                 color={tx?.category.color ?? "#22C55E"}
               />
@@ -158,7 +171,7 @@ export default function TransactionDetailScreen() {
                 style={{ backgroundColor: `${cat.color ?? "#6B7280"}18` }}
               >
                 <Ionicons
-                  name={(cat.icon as any) ?? "pricetag-outline"}
+                  name={(ICON_MAP[cat.icon] ?? "pricetag-outline") as any}
                   size={22}
                   color={cat.color ?? "#6B7280"}
                 />
@@ -169,11 +182,10 @@ export default function TransactionDetailScreen() {
         </View>
 
         <TouchableOpacity
-          className="flex-row items-center justify-center gap-2 py-4 mb-8"
+          className="h-14 bg-blue-600 rounded-2xl shadow-md flex-row justify-center items-center active:bg-blue-700 mb-8"
           onPress={confirmDelete}
         >
-          <Ionicons name="trash-outline" size={18} color="#EF4444" />
-          <Text className="text-danger text-base font-semibold">
+          <Text className="font-bold text-white text-lg">
             Delete transaction
           </Text>
         </TouchableOpacity>

@@ -20,9 +20,6 @@ export default function Settings() {
                 text: "Logout",
                 style: "destructive",
                 onPress: async () => {
-                    try {
-                        await apiRequest("post", "/auth/logout");
-                    } catch { }
                     logout();
                     router.replace("/(auth)/welcome");
                 },
@@ -129,10 +126,10 @@ export default function Settings() {
 
                 {/* Danger zone */}
                 <TouchableOpacity
-                    className="bg-danger py-4 rounded-full items-center shadow-lg mb-6 mx-2"
+                    className="h-14 bg-blue-600 rounded-2xl shadow-md flex-row justify-center items-center active:bg-blue-700 mx-2 mb-6"
                     onPress={handleLogout}
                 >
-                    <Text className="text-white font-bold text-lg">Sign Out</Text>
+                    <Text className="font-bold text-white text-lg">Sign Out</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity

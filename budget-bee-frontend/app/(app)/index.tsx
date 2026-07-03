@@ -155,8 +155,8 @@ export default function Dashboard() {
                                         <Text className="text-textsecondary text-xs">{new Date(t.date).toLocaleDateString("en-LK", { day: '2-digit', month: 'short', year: 'numeric' })}</Text>
                                     </View>
                                 </View>
-                                <Text className={`font-bold text-base ${t.type === 'INCOME' ? 'text-success' : 'text-textprimary'}`}>
-                                    {t.type === 'INCOME' ? '+' : '-'}{formatLKR(t.amount)}
+                                <Text className={`font-bold text-base ${t.type.toUpperCase() === 'INCOME' ? 'text-success' : 'text-textprimary'}`}>
+                                    {t.type.toUpperCase() === 'INCOME' ? '+' : '-'}{formatLKR(t.amount)}
                                 </Text>
                             </View>
                         );

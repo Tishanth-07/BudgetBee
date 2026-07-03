@@ -42,15 +42,13 @@ const ICON_MAP: Record<string, string> = {
 export default function CashTransactions() {
     const router = useRouter();
 
-    const { data: txData, isRefetching, refetch } = useQuery<{ items: Transaction[]; total: number }>({
+    const { data: transactions = [], isRefetching, refetch } = useQuery<Transaction[]>({
         queryKey: ["transactions", "cash"],
         queryFn: async () => {
-            return await apiRequest<{ items: Transaction[]; total: number }>('get', '/transactions', null, { params: { limit: 50 } });
+            return await apiRequest<Transaction[]>('get', '/transactions');
         },
-        initialData: { items: [], total: 0 },
+        initialData: [],
     });
-
-    const transactions = txData?.items ?? [];
 
     return (
         <SafeAreaView className="flex-1 bg-appbg" edges={["top"]}>
@@ -92,7 +90,7 @@ export default function CashTransactions() {
                                 </Text>
                             </View>
                             <Text
-                                className={`font-bold text-base ${item.type === "INCOME" ? "text-success" : "text-textprimary"
+                                className={`font-bold text-base ${item.type?.toUpperCase() === "INCOME" ? "text-success" : "text-textprimary"
                                     }`}
                             >
                                 {formatLKR(item.amount)} LKR

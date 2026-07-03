@@ -57,7 +57,7 @@ export default function AddTransaction() {
             return await apiRequest('post', '/transactions', {
                 ...data,
                 amount: parseFloat(data.amount),
-                type: transactionType,
+                type: transactionType.toLowerCase(),
                 date: new Date().toISOString(),
             });
         },
@@ -80,7 +80,7 @@ export default function AddTransaction() {
         createTransaction.mutate(data);
     };
 
-    const filteredCategories = (categories || []).filter((c: any) => c.type === transactionType);
+    const filteredCategories = (categories || []).filter((c: any) => c.type === transactionType.toLowerCase());
 
     return (
         <SafeAreaView className="flex-1 bg-appbg" edges={['top']}>
@@ -97,13 +97,13 @@ export default function AddTransaction() {
                     {/* Type Switcher */}
                     <View className="flex-row bg-gray-200/60 p-1 rounded-full mb-6">
                         <TouchableOpacity
-                            className={clsx("flex-1 py-3 rounded-full items-center", transactionType === 'EXPENSE' && "bg-white shadow-sm")}
+                            className={clsx("flex-1 py-3 rounded-full items-center", transactionType === 'EXPENSE' && "bg-white")}
                             onPress={() => setTransactionType('EXPENSE')}
                         >
                             <Text className={clsx("font-bold text-sm", transactionType === 'EXPENSE' ? "text-danger" : "text-textsecondary")}>Expense</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
-                            className={clsx("flex-1 py-3 rounded-full items-center", transactionType === 'INCOME' && "bg-white shadow-sm")}
+                            className={clsx("flex-1 py-3 rounded-full items-center", transactionType === 'INCOME' && "bg-white")}
                             onPress={() => setTransactionType('INCOME')}
                         >
                             <Text className={clsx("font-bold text-sm", transactionType === 'INCOME' ? "text-success" : "text-textsecondary")}>Income</Text>
@@ -216,7 +216,7 @@ export default function AddTransaction() {
                                             key={cat.id}
                                             className={clsx(
                                                 "w-[30%] items-center p-3 border-2 rounded-2xl",
-                                                isSelected ? "border-primary bg-primary/5" : "border-transparent bg-white shadow-sm"
+                                                isSelected ? "border-primary bg-primary/5" : "border-transparent bg-white"
                                             )}
                                             onPress={() => onChange(cat.id)}
                                         >
@@ -233,11 +233,11 @@ export default function AddTransaction() {
 
                     {/* Submit Button */}
                     <TouchableOpacity
-                        className="bg-primary py-4 rounded-full items-center shadow-lg mb-8"
+                        className="h-14 bg-blue-600 rounded-2xl shadow-md flex-row justify-center items-center active:bg-blue-700 mb-8"
                         onPress={handleSubmit(onSubmit)}
                         disabled={createTransaction.isPending}
                     >
-                        <Text className="text-white font-bold text-lg">
+                        <Text className="font-bold text-white text-lg">
                             {createTransaction.isPending ? 'Saving...' : 'Save Transaction'}
                         </Text>
                     </TouchableOpacity>

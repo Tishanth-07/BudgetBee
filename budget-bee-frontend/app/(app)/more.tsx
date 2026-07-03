@@ -16,7 +16,6 @@ export default function More() {
 
     const menuItems = [
         { icon: 'card-outline', label: 'Accounts', route: '/(app)/accounts', color: '#3B82F6' },
-        { icon: 'pricetags-outline', label: 'Categories', route: '/(app)/categories', color: '#10B981' },
         { icon: 'cash-outline', label: 'Regular Income', route: '/(app)/income', color: '#F59E0B' },
         { icon: 'settings-outline', label: 'Settings', route: '/(app)/settings', color: '#6B7280' },
         { icon: 'help-buoy-outline', label: 'Help & Support', route: null, color: '#8B5CF6' },
@@ -66,10 +65,9 @@ export default function More() {
                     {/* Logout Button */}
                     <TouchableOpacity
                         onPress={handleLogout}
-                        className="flex-row items-center justify-center bg-danger/10 p-4 rounded-full mb-6"
+                        className="h-14 bg-blue-600 rounded-2xl shadow-md flex-row justify-center items-center active:bg-blue-700 mb-6"
                     >
-                        <Ionicons name="log-out-outline" size={22} color="#EF4444" className="mr-2" />
-                        <Text className="text-lg text-danger font-bold ml-2">Logout</Text>
+                        <Text className="font-bold text-white text-lg">Logout</Text>
                     </TouchableOpacity>
 
                     <Text className="text-center text-textsecondary text-xs mt-4">BudgetBee v1.0.0</Text>

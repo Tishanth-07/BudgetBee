@@ -48,8 +48,8 @@ export default function Budget() {
     });
 
     return (
-        <SafeAreaView className="flex-1 bg-appbg" edges={['top']}>
-            <LinearGradient colors={['#A8C8F8', '#D6E4FF']} className="px-6 pt-4 pb-6 rounded-b-[40px]">
+        <SafeAreaView style={{ flex: 1, backgroundColor: '#F8FAFC' }} edges={['top']}>
+            <LinearGradient colors={['#A8C8F8', '#D6E4FF']} style={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 24, borderBottomLeftRadius: 40, borderBottomRightRadius: 40 }}>
                 <View className="flex-row justify-between items-center mb-6">
                     <Text className="text-navy font-bold text-2xl">Budget</Text>
                     <TouchableOpacity className="w-10 h-10 bg-white/50 rounded-full items-center justify-center">
@@ -60,13 +60,13 @@ export default function Budget() {
                 {/* Segmented Control */}
                 <View className="bg-white/40 p-1 rounded-full flex-row mb-6">
                     <TouchableOpacity
-                        className={clsx("flex-1 py-2.5 rounded-full items-center", scope === 'PERSONAL' && "bg-white shadow-sm")}
+                        className={clsx("flex-1 py-2.5 rounded-full items-center", scope === 'PERSONAL' && "bg-white")}
                         onPress={() => setScope('PERSONAL')}
                     >
                         <Text className={clsx("font-semibold text-sm", scope === 'PERSONAL' ? "text-navy" : "text-textsecondary")}>Personal</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                        className={clsx("flex-1 py-2.5 rounded-full items-center", scope === 'HOUSEHOLD' && "bg-white shadow-sm")}
+                        className={clsx("flex-1 py-2.5 rounded-full items-center", scope === 'HOUSEHOLD' && "bg-white")}
                         onPress={() => setScope('HOUSEHOLD')}
                     >
                         <Text className={clsx("font-semibold text-sm", scope === 'HOUSEHOLD' ? "text-navy" : "text-textsecondary")}>Household</Text>
@@ -122,8 +122,8 @@ export default function Budget() {
                                         </View>
                                     </View>
                                     <View className="items-end">
-                                        <Text className={`font-bold text-base ${t.type === 'INCOME' ? 'text-success' : 'text-textprimary'}`}>
-                                            {t.type === 'INCOME' ? '+' : '-'}{formatLKR(t.amount)}
+                                        <Text className={`font-bold text-base ${t.type.toUpperCase() === 'INCOME' ? 'text-success' : 'text-textprimary'}`}>
+                                            {t.type.toUpperCase() === 'INCOME' ? '+' : '-'}{formatLKR(t.amount)}
                                         </Text>
                                         <Text className="text-textsecondary text-xs mt-1">{new Date(t.date).toLocaleDateString("en-LK", { day: '2-digit', month: 'short' })}</Text>
                                     </View>
@@ -145,8 +145,8 @@ export default function Budget() {
                     <View className="items-center justify-center py-12">
                         <Ionicons name="flag-outline" size={64} color="#D1D5DB" />
                         <Text className="text-textsecondary text-base mt-4 font-medium">No active goals</Text>
-                        <TouchableOpacity className="mt-4 bg-primary/10 px-4 py-2 rounded-full">
-                            <Text className="text-primary font-bold">Create a Goal</Text>
+                        <TouchableOpacity className="h-14 bg-blue-600 rounded-2xl shadow-md flex-row justify-center items-center active:bg-blue-700 mt-4 px-8">
+                            <Text className="font-bold text-white text-lg">Create a Goal</Text>
                         </TouchableOpacity>
                     </View>
                 )}
