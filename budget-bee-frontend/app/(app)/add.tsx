@@ -56,8 +56,8 @@ export default function AddTransaction() {
         mutationFn: async (data: any) => {
             return await apiRequest('post', '/transactions', {
                 ...data,
-                amount: parseFloat(data.amount),
-                type: transactionType.toLowerCase(),
+                amount: Math.round(parseFloat(data.amount) * 100),
+                type: transactionType,
                 date: new Date().toISOString(),
             });
         },

@@ -2,8 +2,12 @@ import { useMemo, useState } from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-function formatLKR(amount: number) {
-  return amount.toLocaleString("en-LK");
+function formatLKR(amountInCents: number) {
+  const amount = amountInCents / 100;
+  return new Intl.NumberFormat("en-LK", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
 }
 
 export interface ExpenseBillItem {

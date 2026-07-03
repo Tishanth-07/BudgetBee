@@ -10,8 +10,12 @@ function formatDate(date: string) {
   });
 }
 
-function formatLKR(amount: number) {
-  return amount.toLocaleString("en-LK");
+function formatLKR(amountInCents: number) {
+  const amount = amountInCents / 100;
+  return new Intl.NumberFormat('en-LK', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+  }).format(amount);
 }
 
 export type TransactionCategory = {
