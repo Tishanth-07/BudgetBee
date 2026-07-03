@@ -6,3 +6,5 @@ node_modules
 
 # Agent
 .agent/
+
+backup_before_float_migration.sql

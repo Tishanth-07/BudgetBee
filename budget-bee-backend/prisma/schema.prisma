@@ -6,6 +6,17 @@ datasource db {
   provider = "postgresql"
 }
 
+enum AccountType {
+  BANK
+  CASH
+  CARD
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
 model User {
   id           String        @id @default(uuid())
   email        String        @unique
@@ -30,8 +41,8 @@ model User {
 model Account {
   id           String        @id @default(uuid())
   name         String
-  type         String        // "Bank" | "Cash" | "Card"
-  balance      Float         @default(0)
+  type         AccountType   @default(BANK)
+  balance      Int           @default(0)
   cardNumber   String?
   cardNetwork  String?
   cardHolder   String?
@@ -72,8 +83,8 @@ model HouseholdMember {
 model Goal {
   id           String     @id @default(uuid())
   name         String
-  targetAmount Float
-  savedAmount  Float      @default(0)
+  targetAmount Int
+  savedAmount  Int           @default(0)
   deadline     DateTime?
   isPaid       Boolean    @default(false)
   householdId  String?
@@ -88,7 +99,7 @@ model Expense {
   id          String     @id @default(uuid())
   groupName   String
   name        String
-  amount      Float
+  amount      Int
   dueDate     DateTime?
   isPaid      Boolean    @default(false)
   priority    String
@@ -116,8 +127,8 @@ model Category {
 
 model Transaction {
   id          String     @id @default(uuid())
-  amount      Float
-  type        String     // "income" | "expense"
+  amount      Int
+  type        TransactionType
   categoryId  String
   accountId   String
   userId      String
@@ -139,7 +150,7 @@ model Transaction {
 model IncomeSource {
   id        String   @id @default(uuid())
   name      String
-  amount    Float
+  amount    Int
   frequency String   // "Monthly" | "Weekly" | "Bi-weekly" | "Annually"
   userId    String
   user      User     @relation(fields: [userId], references: [id])
