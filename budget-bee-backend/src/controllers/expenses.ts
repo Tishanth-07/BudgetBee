@@ -105,7 +105,10 @@ export const updateExpense = async (req: AuthRequest, res: Response, next: NextF
         const existing = await prisma.expense.findFirst({
             where: {
                 id,
-                OR: [{ userId }, { userId: null }],
+                OR: [
+                    { userId },
+                    { household: { members: { some: { userId } } } }
+                ],
             },
         });
 
@@ -146,7 +149,10 @@ export const deleteExpense = async (req: AuthRequest, res: Response, next: NextF
         const existing = await prisma.expense.findFirst({
             where: {
                 id,
-                OR: [{ userId }, { userId: null }],
+                OR: [
+                    { userId },
+                    { household: { members: { some: { userId } } } }
+                ],
             },
         });
 
@@ -180,7 +186,10 @@ export const toggleExpensePaid = async (req: AuthRequest, res: Response, next: N
         const existing = await prisma.expense.findFirst({
             where: {
                 id,
-                OR: [{ userId }, { userId: null }],
+                OR: [
+                    { userId },
+                    { household: { members: { some: { userId } } } }
+                ],
             },
         });
 

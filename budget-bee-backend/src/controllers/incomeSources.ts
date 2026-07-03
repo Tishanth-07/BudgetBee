@@ -6,7 +6,7 @@ import { logger } from '../utils/logger.js';
 
 const incomeSourceSchema = z.object({
     name: z.string().min(1),
-    amount: z.number().positive(),
+    amount: z.number().int().positive(),
     frequency: z.enum(['Monthly', 'Weekly', 'Bi-weekly', 'Annually']),
 });
 

@@ -4,8 +4,8 @@ import { prisma } from '../utils/prisma.js';
 import { z } from 'zod';
 
 const transactionSchema = z.object({
-    amount: z.number(),
-    type: z.enum(['income', 'expense']),
+    amount: z.number().int().positive(),
+    type: z.enum(['INCOME', 'EXPENSE']),
     categoryId: z.string(),
     accountId: z.string(),
     date: z.string().transform((str) => new Date(str)),
@@ -38,17 +38,15 @@ export const createTransaction = async (req: AuthRequest, res: Response, next: N
                 include: { category: true, account: true }
             });
 
-            // Update Account Balance
-            const acc = await tx.account.findUnique({ where: { id: data.accountId } });
-            if (acc) {
-                const newBalance = data.type === 'income'
-                    ? acc.balance + data.amount
-                    : acc.balance - data.amount;
-                await tx.account.update({
-                    where: { id: data.accountId },
-                    data: { balance: newBalance }
-                });
-            }
+            // Update Account Balance Atomically
+            await tx.account.update({
+                where: { id: data.accountId },
+                data: {
+                    balance: data.type === 'INCOME' 
+                        ? { increment: data.amount }
+                        : { decrement: data.amount }
+                }
+            });
             return created;
         });
         res.status(201).json({ success: true, data: transaction, message: 'Created' });
@@ -78,17 +76,15 @@ export const updateTransaction = async (req: AuthRequest, res: Response, next: N
         if (!existing) return res.status(404).json({ success: false, data: null, message: 'Not found' });
 
         const transaction = await prisma.$transaction(async (tx) => {
-            // Revert old balance
-            const oldAcc = await tx.account.findUnique({ where: { id: existing.accountId } });
-            if (oldAcc) {
-                const revertBalance = existing.type === 'income'
-                    ? oldAcc.balance - existing.amount
-                    : oldAcc.balance + existing.amount;
-                await tx.account.update({
-                    where: { id: existing.accountId },
-                    data: { balance: revertBalance }
-                });
-            }
+            // Revert old balance Atomically
+            await tx.account.update({
+                where: { id: existing.accountId },
+                data: {
+                    balance: existing.type === 'INCOME'
+                        ? { decrement: existing.amount }
+                        : { increment: existing.amount }
+                }
+            });
 
             const updated = await tx.transaction.update({
                 where: { id },
@@ -96,17 +92,15 @@ export const updateTransaction = async (req: AuthRequest, res: Response, next: N
                 include: { category: true, account: true }
             });
 
-            // Apply new balance
-            const newAcc = await tx.account.findUnique({ where: { id: updated.accountId } });
-            if (newAcc) {
-                const applyBalance = updated.type === 'income'
-                    ? newAcc.balance + updated.amount
-                    : newAcc.balance - updated.amount;
-                await tx.account.update({
-                    where: { id: updated.accountId },
-                    data: { balance: applyBalance }
-                });
-            }
+            // Apply new balance Atomically
+            await tx.account.update({
+                where: { id: updated.accountId },
+                data: {
+                    balance: updated.type === 'INCOME'
+                        ? { increment: updated.amount }
+                        : { decrement: updated.amount }
+                }
+            });
             return updated;
         });
 
@@ -123,16 +117,15 @@ export const deleteTransaction = async (req: AuthRequest, res: Response, next: N
         if (!existing) return res.status(404).json({ success: false, data: null, message: 'Not found' });
 
         await prisma.$transaction(async (tx) => {
-            const acc = await tx.account.findUnique({ where: { id: existing.accountId } });
-            if (acc) {
-                const revertBalance = existing.type === 'income'
-                    ? acc.balance - existing.amount
-                    : acc.balance + existing.amount;
-                await tx.account.update({
-                    where: { id: existing.accountId },
-                    data: { balance: revertBalance }
-                });
-            }
+            // Revert old balance Atomically
+            await tx.account.update({
+                where: { id: existing.accountId },
+                data: {
+                    balance: existing.type === 'INCOME'
+                        ? { decrement: existing.amount }
+                        : { increment: existing.amount }
+                }
+            });
             await tx.transaction.delete({ where: { id } });
         });
 
