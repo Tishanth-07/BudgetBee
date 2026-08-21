@@ -74,11 +74,26 @@ export default function TransactionDetailScreen() {
   });
 
   const { data: otherCategories } = useQuery<CategoryOption[]>({
-    queryKey: ["categories"],
+    queryKey: ["categories", data?.type],
+    enabled: !!data?.type,
     queryFn: async () => {
-      return await apiRequest<CategoryOption[]>('get', '/categories');
+      return await apiRequest<CategoryOption[]>('get', `/categories?type=${data?.type}`);
     },
     initialData: [],
+  });
+
+  const updateCategoryMutation = useMutation({
+    mutationFn: async (categoryId: string) => {
+      return await apiRequest('put', `/transactions/${id}`, { categoryId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transaction", id] });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+    onError: () => {
+      Alert.alert("Error", "Failed to update category");
+    },
   });
 
   const deleteMutation = useMutation({
@@ -169,6 +184,8 @@ export default function TransactionDetailScreen() {
                 key={cat.id}
                 className="category-icon-container items-center gap-1"
                 style={{ backgroundColor: `${cat.color ?? "#6B7280"}18` }}
+                onPress={() => updateCategoryMutation.mutate(cat.id)}
+                disabled={updateCategoryMutation.isPending}
               >
                 <Ionicons
                   name={(ICON_MAP[cat.icon] ?? "pricetag-outline") as any}

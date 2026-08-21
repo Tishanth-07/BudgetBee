@@ -40,7 +40,7 @@ export default function Accounts() {
                         <Ionicons name="chevron-back" size={24} color="#1A2B5E" />
                     </TouchableOpacity>
                     <Text className="text-navy font-bold text-xl">My Accounts</Text>
-                    <TouchableOpacity onPress={() => { }} className="w-10 h-10 bg-white/50 rounded-full items-center justify-center">
+                    <TouchableOpacity onPress={() => router.push('/(app)/accounts/add' as any)} className="w-10 h-10 bg-white/50 rounded-full items-center justify-center">
                         <Ionicons name="add" size={24} color="#1A2B5E" />
                     </TouchableOpacity>
                 </View>

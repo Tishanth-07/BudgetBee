@@ -45,9 +45,9 @@ export default function AddTransaction() {
     });
 
     const { data: categories } = useQuery({
-        queryKey: ['categories'],
+        queryKey: ['categories', transactionType],
         queryFn: async () => {
-            return await apiRequest<any[]>('get', '/categories');
+            return await apiRequest<any[]>('get', `/categories?type=${transactionType}`);
         },
         initialData: []
     });
@@ -74,13 +74,12 @@ export default function AddTransaction() {
     });
 
     const onSubmit = (data: any) => {
-        if (!data.categoryId) return Alert.alert('Required', 'Please select a category');
         if (!data.accountId) return Alert.alert('Required', 'Please select an account');
         if (!data.amount || isNaN(parseFloat(data.amount))) return Alert.alert('Required', 'Please enter a valid amount');
         createTransaction.mutate(data);
     };
 
-    const filteredCategories = (categories || []).filter((c: any) => c.type === transactionType.toLowerCase());
+    const filteredCategories = categories || [];
 
     return (
         <SafeAreaView className="flex-1 bg-appbg" edges={['top']}>
@@ -135,27 +134,39 @@ export default function AddTransaction() {
 
                     {/* Account Selection */}
                     <Text className="text-textprimary font-bold text-base mb-3">Account</Text>
-                    <Controller
-                        control={control}
-                        name="accountId"
-                        render={({ field: { onChange, value } }) => (
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-6 flex-row gap-3">
-                                {accounts?.map((acc: any) => (
-                                    <TouchableOpacity
-                                        key={acc.id}
-                                        className={clsx(
-                                            "px-4 py-3 rounded-card border-2 mr-3 min-w-[100px] flex-row items-center gap-2",
-                                            value === acc.id ? "bg-primary/10 border-primary" : "bg-white border-transparent"
-                                        )}
-                                        onPress={() => onChange(acc.id)}
-                                    >
-                                        <Ionicons name={acc.type === 'CASH' ? 'cash-outline' : 'card-outline'} size={20} color={value === acc.id ? '#1A56E8' : '#6B7280'} />
-                                        <Text className={clsx("font-semibold text-sm", value === acc.id ? "text-primary" : "text-textprimary")}>{acc.name}</Text>
-                                    </TouchableOpacity>
-                                ))}
-                            </ScrollView>
-                        )}
-                    />
+                    {accounts && accounts.length > 0 ? (
+                        <Controller
+                            control={control}
+                            name="accountId"
+                            render={({ field: { onChange, value } }) => (
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-6 flex-row gap-3">
+                                    {accounts.map((acc: any) => (
+                                        <TouchableOpacity
+                                            key={acc.id}
+                                            className={clsx(
+                                                "px-4 py-3 rounded-card border-2 mr-3 min-w-[100px] flex-row items-center gap-2",
+                                                value === acc.id ? "bg-primary/10 border-primary" : "bg-white border-transparent"
+                                            )}
+                                            onPress={() => onChange(acc.id)}
+                                        >
+                                            <Ionicons name={acc.type === 'CASH' ? 'cash-outline' : 'card-outline'} size={20} color={value === acc.id ? '#1A56E8' : '#6B7280'} />
+                                            <Text className={clsx("font-semibold text-sm", value === acc.id ? "text-primary" : "text-textprimary")}>{acc.name}</Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+                            )}
+                        />
+                    ) : (
+                        <View className="bg-gray-100 rounded-card p-4 mb-6 items-center flex-row justify-between">
+                            <Text className="text-textsecondary text-sm flex-1 mr-4">No accounts found. Add one to track transactions.</Text>
+                            <TouchableOpacity 
+                                className="bg-primary px-4 py-2 rounded-lg"
+                                onPress={() => router.push('/(app)/accounts' as any)}
+                            >
+                                <Text className="text-white font-bold text-sm">Add Account</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
 
                     {/* Merchant & Note */}
                     <Text className="text-textprimary font-bold text-base mb-3">Details</Text>
@@ -216,7 +227,7 @@ export default function AddTransaction() {
                                             key={cat.id}
                                             className={clsx(
                                                 "w-[30%] items-center p-3 border-2 rounded-2xl",
-                                                isSelected ? "border-primary bg-primary/5" : "border-transparent bg-white"
+                                                isSelected ? "border-primary bg-primary/10" : "border-transparent bg-white"
                                             )}
                                             onPress={() => onChange(cat.id)}
                                         >
