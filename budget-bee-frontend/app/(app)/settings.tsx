@@ -6,10 +6,12 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useAuthStore } from "../../store/authStore";
 import { apiRequest } from "../../lib/api/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function Settings() {
     const router = useRouter();
-    const { logout } = useAuthStore();
+    const { logout, user } = useAuthStore();
+    const queryClient = useQueryClient();
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
     const [darkMode, setDarkMode] = useState(false);
 
@@ -20,8 +22,9 @@ export default function Settings() {
                 text: "Logout",
                 style: "destructive",
                 onPress: async () => {
-                    logout();
-                    router.replace("/(auth)/welcome");
+                    await logout();
+                    queryClient.clear();
+                    router.replace("/(auth)/login");
                 },
             },
         ]);
@@ -51,6 +54,21 @@ export default function Settings() {
             </LinearGradient>
 
             <ScrollView className="flex-1 px-4 py-6" contentContainerStyle={{ paddingBottom: 100 }}>
+                {/* Profile Section */}
+                <View className="bg-white rounded-card shadow-sm mb-6 p-4 flex-row items-center gap-4">
+                    <View className="w-16 h-16 bg-blue-100 rounded-full items-center justify-center">
+                        <Text className="text-blue-600 font-bold text-xl">
+                            {user?.firstName?.[0] || ''}{user?.lastName?.[0] || ''}
+                        </Text>
+                    </View>
+                    <View className="flex-1">
+                        <Text className="text-textprimary font-bold text-lg">
+                            {user?.firstName ? `${user.firstName} ${user.lastName || ''}` : 'User Name'}
+                        </Text>
+                        <Text className="text-textsecondary">{user?.email || 'user@example.com'}</Text>
+                    </View>
+                </View>
+
                 {/* Preferences */}
                 <Text className="text-textsecondary text-xs uppercase font-bold tracking-wider mb-2 ml-2">Preferences</Text>
                 <View className="bg-white rounded-card shadow-sm mb-6">
