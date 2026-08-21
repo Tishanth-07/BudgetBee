@@ -22,8 +22,33 @@ const queryClient = new QueryClient({
     },
 });
 
+const customStorage = {
+    getItem: async (key: string) => {
+        try {
+            return await AsyncStorage.getItem(key);
+        } catch (error) {
+            console.error('AsyncStorage getItem error:', error);
+            return null;
+        }
+    },
+    setItem: async (key: string, value: string) => {
+        try {
+            await AsyncStorage.setItem(key, value);
+        } catch (error) {
+            console.error('AsyncStorage setItem error:', error);
+        }
+    },
+    removeItem: async (key: string) => {
+        try {
+            await AsyncStorage.removeItem(key);
+        } catch (error) {
+            console.error('AsyncStorage removeItem error:', error);
+        }
+    },
+};
+
 const asyncStoragePersister = createAsyncStoragePersister({
-    storage: AsyncStorage,
+    storage: customStorage,
 });
 
 function InitialLayout() {

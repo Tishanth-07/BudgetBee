@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import * as SecureStore from 'expo-secure-store';
+import { storage } from '../lib/storage';
 
 interface AuthState {
     token: string | null;
@@ -19,19 +19,19 @@ export const useAuthStore = create<AuthState>((set) => ({
     isAuthenticated: false,
     isReady: false,
     login: async (token, refreshToken, user) => {
-        await SecureStore.setItemAsync('token', token);
-        await SecureStore.setItemAsync('refreshToken', refreshToken);
+        await storage.setItemAsync('token', token);
+        await storage.setItemAsync('refreshToken', refreshToken);
         set({ token, refreshToken, user, isAuthenticated: true, isReady: true });
     },
     logout: async () => {
-        await SecureStore.deleteItemAsync('token');
-        await SecureStore.deleteItemAsync('refreshToken');
+        await storage.deleteItemAsync('token');
+        await storage.deleteItemAsync('refreshToken');
         set({ token: null, refreshToken: null, user: null, isAuthenticated: false });
     },
     loadToken: async () => {
         try {
-            const token = await SecureStore.getItemAsync('token');
-            const refreshToken = await SecureStore.getItemAsync('refreshToken');
+            const token = await storage.getItemAsync('token');
+            const refreshToken = await storage.getItemAsync('refreshToken');
             if (token && refreshToken) {
                 set({ token, refreshToken, isAuthenticated: true, isReady: true });
             } else {

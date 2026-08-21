@@ -9,7 +9,12 @@ import { Mail, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 export default function Login() {
-    const { control, handleSubmit, formState: { errors } } = useForm();
+    const { control, handleSubmit, formState: { errors } } = useForm({
+        defaultValues: {
+            email: '',
+            password: ''
+        }
+    });
     const login = useAuthStore((state) => state.login);
     const router = useRouter();
     const [error, setError] = useState('');
@@ -28,6 +33,13 @@ export default function Login() {
                 setError(res.data.message || 'Login failed');
             }
         } catch (err: any) {
+            console.error('DEBUG LOGIN ERROR:', {
+                message: err.message,
+                code: err.code,
+                response: err.response?.data,
+                url: err.config?.url,
+                baseURL: err.config?.baseURL
+            });
             setError(err.response?.data?.message || 'Login failed. Please check your connection.');
         } finally {
             setIsLoading(false);
