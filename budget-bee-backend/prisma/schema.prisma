@@ -17,6 +17,13 @@ enum TransactionType {
   EXPENSE
 }
 
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
 model User {
   id           String        @id @default(uuid())
   email        String        @unique
@@ -102,7 +109,7 @@ model Expense {
   amount      Int
   dueDate     DateTime?
   isPaid      Boolean    @default(false)
-  priority    String
+  priorityLevel Priority @default(MEDIUM)
   logoUrl     String?
   householdId String?
   userId      String?
