@@ -1,15 +1,20 @@
 import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
-import * as SecureStore from 'expo-secure-store';
+import { storage } from '../storage';
 import { useAuthStore } from '../../store/authStore';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.194.44.56:5001/api';
+let API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.26.72.56:5001/api';
+
+// If running in a local web browser, route directly to localhost to avoid network IP routing issues
+if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '[::1]' || window.location.hostname === '127.0.0.1')) {
+    API_URL = 'http://localhost:5001/api';
+}
 
 export const api = axios.create({
     baseURL: API_URL,
 });
 
 api.interceptors.request.use(async (config) => {
-    const token = await SecureStore.getItemAsync('token');
+    const token = await storage.getItemAsync('token');
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
@@ -52,15 +57,15 @@ api.interceptors.response.use(
             isRefreshing = true;
 
             try {
-                const refreshToken = await SecureStore.getItemAsync('refreshToken');
+                const refreshToken = await storage.getItemAsync('refreshToken');
                 if (!refreshToken) throw new Error('No refresh token available');
 
                 // Make a direct axios call to avoid interceptors
                 const response = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
                 const { accessToken, refreshToken: newRefreshToken } = response.data.data;
 
-                await SecureStore.setItemAsync('token', accessToken);
-                await SecureStore.setItemAsync('refreshToken', newRefreshToken);
+                await storage.setItemAsync('token', accessToken);
+                await storage.setItemAsync('refreshToken', newRefreshToken);
 
                 // Update Zustand store (if needed, though this is outside React lifecycle)
                 useAuthStore.getState().login(accessToken, newRefreshToken, useAuthStore.getState().user);
@@ -105,7 +110,7 @@ export async function apiRequest<T>(
         if (!response.data.success) {
             throw new Error(response.data.message || 'API Error');
         }
-        return response.data.data;
+        return (response.data.data ?? null) as any as T;
     }
 
     // Fallback if not enveloped
