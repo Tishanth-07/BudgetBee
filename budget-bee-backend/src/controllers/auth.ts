@@ -323,6 +323,14 @@ export const verifyEmail = async (req: Request, res: Response) => {
             data: { isVerified: true }
         });
 
+        await prisma.category.createMany({
+            data: [
+                { userId: user.id, name: 'Others', type: 'EXPENSE', icon: 'dots', color: '#9CA3AF' },
+                { userId: user.id, name: 'Others', type: 'INCOME', icon: 'dots', color: '#9CA3AF' },
+            ],
+            skipDuplicates: true
+        });
+
         await prisma.verificationCode.deleteMany({ where: { email, type: 'REGISTER' } });
 
         const accessToken = jwt.sign({ userId: user.id, email: user.email }, process.env.JWT_SECRET || config.JWT_SECRET, { expiresIn: '15m' });

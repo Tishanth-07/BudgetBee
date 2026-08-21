@@ -12,6 +12,7 @@ const createAccountSchema = z.object({
     cardHolder: z.string().optional(),
     expiry: z.string().optional(),
     color: z.string().optional(),
+    balance: z.number().int().optional(),
 });
 
 const updateAccountSchema = createAccountSchema.partial();

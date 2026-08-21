@@ -14,12 +14,17 @@ const createExpenseSchema = z.object({
     name: z.string().min(1),
     amount: z.number().int().positive(),
     dueDate: z.string().datetime().optional(),
-    priority: z.enum(['HIGH', 'MEDIUM', 'LOW']),
+    priorityLevel: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
     logoUrl: z.string().optional(),
     householdId: z.string().uuid().optional(),
 });
 
 const updateExpenseSchema = createExpenseSchema.partial();
+
+const payExpenseSchema = z.object({
+    accountId: z.string().uuid(),
+    categoryId: z.string().uuid().optional(),
+});
 
 const idParamSchema = z.object({
     id: z.string().uuid(),
@@ -44,14 +49,25 @@ export const getExpenses = async (req: AuthRequest, res: Response, next: NextFun
             orderBy: [{ groupName: 'asc' }, { createdAt: 'asc' }],
         });
 
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
         const groups = Object.values(
-            expenses.reduce<Record<string, { groupName: string; total: number; items: typeof expenses }>>(
+            expenses.reduce<Record<string, { groupName: string; total: number; items: (typeof expenses[0] & { daysUntilDue: number | null })[] }>>(
                 (acc, expense) => {
                     const key = expense.groupName;
                     if (!acc[key]) {
-                        acc[key] = { groupName: expense.groupName, total: 0, items: [] as any };
+                        acc[key] = { groupName: expense.groupName, total: 0, items: [] };
                     }
-                    acc[key].items.push(expense);
+                    
+                    let daysUntilDue = null;
+                    if (expense.dueDate) {
+                        const dueDate = new Date(expense.dueDate);
+                        dueDate.setHours(0, 0, 0, 0);
+                        daysUntilDue = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                    }
+
+                    acc[key].items.push({ ...expense, daysUntilDue });
                     acc[key].total += expense.amount;
                     return acc;
                 },
@@ -178,10 +194,11 @@ export const deleteExpense = async (req: AuthRequest, res: Response, next: NextF
     }
 };
 
-export const toggleExpensePaid = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const payExpense = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         const userId = req.user!.id;
         const { id } = idParamSchema.parse(req.params);
+        const { accountId, categoryId } = payExpenseSchema.parse(req.body);
 
         const existing = await prisma.expense.findFirst({
             where: {
@@ -201,21 +218,59 @@ export const toggleExpensePaid = async (req: AuthRequest, res: Response, next: N
                 error: 'Expense not found',
             });
         }
+        
+        if (existing.isPaid) {
+            return res.status(400).json({ success: false, data: null, message: 'Expense is already paid' });
+        }
 
-        const updated = await prisma.expense.update({
-            where: { id },
-            data: {
-                isPaid: !existing.isPaid,
-            },
+        let finalCategoryId = categoryId;
+        if (!finalCategoryId) {
+            let othersCategory = await prisma.category.findFirst({
+                where: { userId, type: 'EXPENSE', name: 'Others' }
+            });
+            if (!othersCategory) {
+                othersCategory = await prisma.category.create({
+                    data: { userId, name: 'Others', type: 'EXPENSE', icon: 'dots', color: '#9CA3AF' }
+                });
+            }
+            finalCategoryId = othersCategory.id;
+        }
+
+        const updated = await prisma.$transaction(async (tx) => {
+            const expense = await tx.expense.update({
+                where: { id },
+                data: { isPaid: true },
+            });
+
+            await tx.transaction.create({
+                data: {
+                    amount: expense.amount,
+                    type: 'EXPENSE',
+                    categoryId: finalCategoryId,
+                    accountId,
+                    userId,
+                    householdId: expense.householdId,
+                    date: new Date(),
+                    merchant: expense.name,
+                    note: `Payment for ${expense.name} (${expense.groupName})`
+                }
+            });
+
+            await tx.account.update({
+                where: { id: accountId },
+                data: { balance: { decrement: expense.amount } }
+            });
+
+            return expense;
         });
 
         return res.json({
             success: true,
             data: updated,
-            message: 'Expense payment status updated',
+            message: 'Expense paid successfully',
         });
     } catch (error) {
-        logger.error({ error, userId: req.user?.id }, 'toggleExpensePaid failed');
+        logger.error({ error, userId: req.user?.id }, 'payExpense failed');
         return next(error);
     }
 };

@@ -13,8 +13,13 @@ const categorySchema = z.object({
 export const getCategories = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         const userId = req.user!.id;
+        const type = req.query.type as string | undefined;
+        
         const categories = await prisma.category.findMany({
-            where: { userId },
+            where: { 
+                userId,
+                ...(type ? { type: type.toUpperCase() as any } : {})
+            },
         });
         res.json({ success: true, data: categories, message: 'Categories fetched' });
     } catch (error) {

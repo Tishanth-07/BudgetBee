@@ -6,7 +6,7 @@ import { z } from 'zod';
 const transactionSchema = z.object({
     amount: z.number().int().positive(),
     type: z.enum(['INCOME', 'EXPENSE']),
-    categoryId: z.string(),
+    categoryId: z.string().optional(),
     accountId: z.string(),
     date: z.string().transform((str) => new Date(str)),
     merchant: z.string().optional(),
@@ -32,9 +32,28 @@ export const createTransaction = async (req: AuthRequest, res: Response, next: N
         const userId = req.user!.id;
         const data = transactionSchema.parse(req.body);
 
+        let finalCategoryId = data.categoryId;
+        if (!finalCategoryId) {
+            let othersCategory = await prisma.category.findFirst({
+                where: { userId, type: data.type, name: 'Others' }
+            });
+            if (!othersCategory) {
+                othersCategory = await prisma.category.create({
+                    data: {
+                        userId,
+                        name: 'Others',
+                        type: data.type,
+                        icon: 'dots',
+                        color: '#9CA3AF'
+                    }
+                });
+            }
+            finalCategoryId = othersCategory.id;
+        }
+
         const transaction = await prisma.$transaction(async (tx) => {
             const created = await tx.transaction.create({
-                data: { ...data, userId },
+                data: { ...data, categoryId: finalCategoryId, userId },
                 include: { category: true, account: true }
             });
 

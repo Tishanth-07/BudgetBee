@@ -4,7 +4,7 @@ import {
     createExpense,
     updateExpense,
     deleteExpense,
-    toggleExpensePaid,
+    payExpense,
 } from '../controllers/expenses.js';
 import { authenticateToken } from '../middleware/auth.js';
 
@@ -16,7 +16,7 @@ router.get('/', getExpenses);
 router.post('/', createExpense);
 router.put('/:id', updateExpense);
 router.delete('/:id', deleteExpense);
-router.patch('/:id/pay', toggleExpensePaid);
+router.patch('/:id/pay', payExpense);
 
 export default router;
 
